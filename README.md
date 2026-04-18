@@ -45,11 +45,16 @@ git checkout devin/1776473808-biblioteca-virtual-v2
 # 3. Instalar dependências
 npm install
 
-# 4. Criar o banco SQLite e popular com dados de exemplo
+# 4. Copiar o arquivo de variáveis de ambiente (define DATABASE_URL para o SQLite)
+cp .env.example .env                # Linux/macOS
+# copy .env.example .env            # Windows (cmd)
+# Copy-Item .env.example .env       # Windows (PowerShell)
+
+# 5. Criar o banco SQLite e popular com dados de exemplo
 npx prisma migrate dev --name init
 npx prisma db seed
 
-# 5. Iniciar o servidor de desenvolvimento
+# 6. Iniciar o servidor de desenvolvimento
 npm run dev
 ```
 
