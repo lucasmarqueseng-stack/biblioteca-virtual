@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BookOpen, LayoutDashboard, Library, Target } from "lucide-react";
+import { BookOpen, LayoutDashboard, Library, Target, Upload } from "lucide-react";
 
 import { NavLink } from "@/components/nav-link";
 
@@ -7,6 +7,7 @@ const links = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/livros", label: "Livros", icon: Library },
   { href: "/metas", label: "Metas", icon: Target },
+  { href: "/livros/importar", label: "Importar", icon: Upload },
 ];
 
 export function Navbar() {
