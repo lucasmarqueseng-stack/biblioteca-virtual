@@ -1,0 +1,63 @@
+// Biblioteca Virtual — schema Prisma
+// Para rodar em produção com Postgres, troque `provider = "sqlite"` por
+// `provider = "postgresql"` e ajuste a variável `DATABASE_URL`.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Author {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  books     Book[]   @relation("BookAuthors")
+}
+
+model Book {
+  id            Int      @id @default(autoincrement())
+  title         String
+  year          Int?
+  genre         String?
+  description   String?
+  coverUrl      String?
+  status        String   @default("NAO_LIDO")
+  initialRating Int?
+  pages         Int      @default(0)
+  pagesRead     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  authors Author[]      @relation("BookAuthors")
+  reviews Review[]
+  goals   ReadingGoal[] @relation("GoalBooks")
+
+  @@index([status])
+  @@index([genre])
+}
+
+model Review {
+  id        Int      @id @default(autoincrement())
+  bookId    Int
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  book Book @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([bookId])
+}
+
+model ReadingGoal {
+  id          Int      @id @default(autoincrement())
+  year        Int      @unique
+  targetBooks Int?
+  targetPages Int?
+  createdAt   DateTime @default(now())
+
+  books Book[] @relation("GoalBooks")
+}
