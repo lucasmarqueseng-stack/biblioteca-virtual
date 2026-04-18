@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -165,22 +166,24 @@ export function BookCardActions({
             {goals.length > 0 ? (
               <>
                 <DropdownMenuSeparator />
-                <DropdownMenuLabel className="flex items-center gap-2">
-                  <Target className="h-3.5 w-3.5" />
-                  Adicionar à meta
-                </DropdownMenuLabel>
-                {goals.map((g) => (
-                  <DropdownMenuItem
-                    key={g.year}
-                    onSelect={(e) => {
-                      e.preventDefault();
-                      setMenuOpen(false);
-                      addToGoal(g.year);
-                    }}
-                  >
-                    Meta {g.year}
-                  </DropdownMenuItem>
-                ))}
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="flex items-center gap-2">
+                    <Target className="h-3.5 w-3.5" />
+                    Adicionar à meta
+                  </DropdownMenuLabel>
+                  {goals.map((g) => (
+                    <DropdownMenuItem
+                      key={g.year}
+                      onSelect={(e) => {
+                        e.preventDefault();
+                        setMenuOpen(false);
+                        addToGoal(g.year);
+                      }}
+                    >
+                      Meta {g.year}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuGroup>
               </>
             ) : null}
           </DropdownMenuContent>
