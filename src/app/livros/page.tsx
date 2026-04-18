@@ -50,8 +50,8 @@ export default async function BooksPage({
         { authors: { some: { name: { contains: q } } } },
       ],
     });
-  if (status) where.AND.push({ status });
-  if (genre) where.AND.push({ genre });
+  if (status && status !== "all") where.AND.push({ status });
+  if (genre && genre !== "all") where.AND.push({ genre });
 
   const orderBy =
     order === "title-asc"
