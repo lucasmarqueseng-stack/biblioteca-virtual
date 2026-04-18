@@ -167,7 +167,7 @@ export async function updateBookAction(
   const formFinishedAt = parseFinishedAtInput(raw.finishedAtStr);
   if (parsed.data.status === BOOK_STATUS.LIDO) {
     if (formFinishedAt) finishedAt = formFinishedAt;
-    else if (!existing.finishedAt) finishedAt = new Date();
+    else finishedAt = existing.finishedAt ?? new Date();
   } else if (existing.status === BOOK_STATUS.LIDO) {
     finishedAt = null;
   }
