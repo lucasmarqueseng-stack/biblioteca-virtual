@@ -41,7 +41,10 @@ function buildFromFormData(formData: FormData) {
       (String(formData.get("coverUrl") ?? "").trim() || null) as string | null,
     status: (String(formData.get("status") ?? "NAO_LIDO") ||
       "NAO_LIDO") as string,
-    initialRating: initialRating != null ? Math.trunc(initialRating) : null,
+    initialRating:
+      initialRating != null && initialRating > 0
+        ? Math.trunc(initialRating)
+        : null,
     pages: parseInteger(formData.get("pages"), 0),
     pagesRead: parseInteger(formData.get("pagesRead"), 0),
   };
@@ -159,15 +162,12 @@ export async function setBookStatusAction(
   }
   const book = await prisma.book.update({
     where: { id },
-    data: {
-      status,
-      ...(status === BOOK_STATUS.LIDO
-        ? { pagesRead: { set: undefined } }
-        : {}),
-    },
+    data: { status },
   });
 
-  if (status === BOOK_STATUS.LIDO && book.pages > 0) {
+  // Ao marcar como "Lido", preenche `pagesRead` com o total de páginas
+  // para que a meta e os gráficos reflitam o livro concluído.
+  if (status === BOOK_STATUS.LIDO && book.pages > 0 && book.pagesRead !== book.pages) {
     await prisma.book.update({
       where: { id },
       data: { pagesRead: book.pages },
