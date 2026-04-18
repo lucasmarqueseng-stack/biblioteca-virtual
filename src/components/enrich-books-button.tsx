@@ -38,6 +38,14 @@ export function EnrichBooksButton() {
       } else {
         toast.success(`Atualizados: ${parts.join(" · ")}`);
       }
+      if (res.notMatchedTitles.length > 0) {
+        const sample = res.notMatchedTitles.slice(0, 4).join(", ");
+        const suffix =
+          res.notMatchedTitles.length > 4
+            ? `, +${res.notMatchedTitles.length - 4} outros`
+            : "";
+        toast.info(`Sem match: ${sample}${suffix}`, { duration: 8000 });
+      }
       router.refresh();
     });
   }
