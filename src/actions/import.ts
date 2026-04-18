@@ -116,6 +116,7 @@ export async function importBooksAction(
           genre: row.genre,
           description,
           status: row.status,
+          owned: row.owned,
           pages: 0,
           pagesRead: 0,
           finishedAt: row.status === BOOK_STATUS.LIDO ? new Date() : null,

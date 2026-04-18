@@ -30,6 +30,12 @@ function buildFromFormData(formData: FormData) {
   const authors = parseAuthors(String(formData.get("authors") ?? ""));
   const initialRating = parseNumber(formData.get("initialRating"));
   const year = parseNumber(formData.get("year"));
+  const ownedRaw = formData.get("owned");
+  const owned =
+    ownedRaw != null && ownedRaw !== "" && ownedRaw !== "false" && ownedRaw !== "0";
+  const finishedAtRaw = formData.get("finishedAt");
+  const finishedAtStr =
+    typeof finishedAtRaw === "string" ? finishedAtRaw.trim() : "";
   return {
     title: String(formData.get("title") ?? ""),
     authors,
@@ -41,13 +47,30 @@ function buildFromFormData(formData: FormData) {
       (String(formData.get("coverUrl") ?? "").trim() || null) as string | null,
     status: (String(formData.get("status") ?? "NAO_LIDO") ||
       "NAO_LIDO") as string,
+    owned,
     initialRating:
       initialRating != null && initialRating > 0
         ? Math.trunc(initialRating)
         : null,
     pages: parseInteger(formData.get("pages"), 0),
     pagesRead: parseInteger(formData.get("pagesRead"), 0),
+    finishedAtStr,
   };
+}
+
+function parseFinishedAtInput(s: string): Date | null {
+  if (!s) return null;
+  // aceita "YYYY-MM-DD" (input type="date") ou ISO completo
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+  if (match) {
+    const y = Number(match[1]);
+    const m = Number(match[2]);
+    const d = Number(match[3]);
+    const dt = new Date(y, m - 1, d, 12, 0, 0, 0); // meio-dia local p/ evitar fuso
+    if (!Number.isNaN(dt.getTime())) return dt;
+  }
+  const dt = new Date(s);
+  return Number.isNaN(dt.getTime()) ? null : dt;
 }
 
 async function connectAuthors(authorNames: string[]) {
@@ -83,7 +106,9 @@ export async function createBookAction(
   const authorConnects = await connectAuthors(parsed.data.authors);
 
   const finishedAt =
-    parsed.data.status === BOOK_STATUS.LIDO ? new Date() : null;
+    parsed.data.status === BOOK_STATUS.LIDO
+      ? parseFinishedAtInput(raw.finishedAtStr) ?? new Date()
+      : null;
 
   const book = await prisma.book.create({
     data: {
@@ -93,6 +118,7 @@ export async function createBookAction(
       description: parsed.data.description ?? null,
       coverUrl: parsed.data.coverUrl ?? null,
       status: parsed.data.status,
+      owned: raw.owned,
       initialRating: parsed.data.initialRating ?? null,
       pages: parsed.data.pages,
       pagesRead: parsed.data.pagesRead,
@@ -133,11 +159,15 @@ export async function updateBookAction(
     return { ok: false, error: "Livro não encontrado." };
   }
 
-  // Sincroniza `finishedAt` com a mesma lógica de `setBookStatusAction`:
-  // entrando em "Lido" define a data (se ainda não tiver), saindo limpa.
+  // Sincroniza `finishedAt`:
+  // - Se o form trouxe uma data, usa ela quando o status for Lido.
+  // - Entrando em "Lido" sem data: define se ainda não tiver.
+  // - Saindo de "Lido": limpa.
   let finishedAt: Date | null | undefined = undefined;
+  const formFinishedAt = parseFinishedAtInput(raw.finishedAtStr);
   if (parsed.data.status === BOOK_STATUS.LIDO) {
-    if (!existing.finishedAt) finishedAt = new Date();
+    if (formFinishedAt) finishedAt = formFinishedAt;
+    else finishedAt = existing.finishedAt ?? new Date();
   } else if (existing.status === BOOK_STATUS.LIDO) {
     finishedAt = null;
   }
@@ -151,6 +181,7 @@ export async function updateBookAction(
       description: parsed.data.description ?? null,
       coverUrl: parsed.data.coverUrl ?? null,
       status: parsed.data.status,
+      owned: raw.owned,
       initialRating: parsed.data.initialRating ?? null,
       pages: parsed.data.pages,
       pagesRead: parsed.data.pagesRead,
@@ -238,6 +269,22 @@ export async function setFinishedAtAction(
   revalidatePath("/livros");
   revalidatePath(`/livros/${id}`);
   revalidatePath("/metas");
+  return { ok: true };
+}
+
+export async function setBookOwnedAction(
+  id: number,
+  owned: boolean,
+): Promise<ActionResult> {
+  const existing = await prisma.book.findUnique({ where: { id }, select: { id: true } });
+  if (!existing) return { ok: false, error: "Livro não encontrado." };
+  await prisma.book.update({
+    where: { id },
+    data: { owned },
+  });
+  revalidatePath("/");
+  revalidatePath("/livros");
+  revalidatePath(`/livros/${id}`);
   return { ok: true };
 }
 

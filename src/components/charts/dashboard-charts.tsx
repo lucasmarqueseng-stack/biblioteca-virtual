@@ -20,7 +20,6 @@ const STATUS_COLORS: Record<BookStatus, string> = {
   NAO_LIDO: "#94a3b8",
   LENDO: "#f59e0b",
   LIDO: "#10b981",
-  TENHO: "#0ea5e9",
 };
 
 export function StatusPieChart({

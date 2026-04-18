@@ -13,6 +13,7 @@ const books = [
     coverUrl:
       "https://m.media-amazon.com/images/I/71pI5PHAAqL._AC_UF1000,1000_QL80_.jpg",
     status: "LIDO",
+    owned: true,
     initialRating: 5,
     pages: 256,
     pagesRead: 256,
@@ -27,6 +28,7 @@ const books = [
     coverUrl:
       "https://m.media-amazon.com/images/I/61V6jGJe1sL._AC_UF1000,1000_QL80_.jpg",
     status: "LENDO",
+    owned: true,
     initialRating: 4,
     pages: 96,
     pagesRead: 40,
@@ -41,6 +43,7 @@ const books = [
     coverUrl:
       "https://m.media-amazon.com/images/I/81Wf2gqWPwL._AC_UF1000,1000_QL80_.jpg",
     status: "NAO_LIDO",
+    owned: false,
     initialRating: null,
     pages: 304,
     pagesRead: 0,
@@ -55,6 +58,7 @@ const books = [
     coverUrl:
       "https://m.media-amazon.com/images/I/71-ghLb8qML._AC_UF1000,1000_QL80_.jpg",
     status: "LIDO",
+    owned: true,
     initialRating: 5,
     pages: 464,
     pagesRead: 464,
@@ -69,6 +73,7 @@ const books = [
     coverUrl:
       "https://m.media-amazon.com/images/I/71jLBXtWJWL._AC_UF1000,1000_QL80_.jpg",
     status: "LENDO",
+    owned: true,
     initialRating: 5,
     pages: 576,
     pagesRead: 240,
@@ -82,7 +87,8 @@ const books = [
       "Distopia clássica sobre vigilância totalitária no Estado oceânico liderado pelo Grande Irmão.",
     coverUrl:
       "https://m.media-amazon.com/images/I/61ZewDE3beL._AC_UF1000,1000_QL80_.jpg",
-    status: "TENHO",
+    status: "NAO_LIDO",
+    owned: true,
     initialRating: 5,
     pages: 416,
     pagesRead: 0,
@@ -97,6 +103,7 @@ const books = [
     coverUrl:
       "https://m.media-amazon.com/images/I/61KoOv1Q3IL._AC_UF1000,1000_QL80_.jpg",
     status: "LIDO",
+    owned: true,
     initialRating: 4,
     pages: 152,
     pagesRead: 152,
@@ -131,9 +138,11 @@ async function main() {
         description: b.description,
         coverUrl: b.coverUrl,
         status: b.status,
+        owned: b.owned,
         initialRating: b.initialRating,
         pages: b.pages,
         pagesRead: b.pagesRead,
+        finishedAt: b.status === "LIDO" ? new Date() : null,
         authors: { connect: createdAuthors.map((a) => ({ id: a.id })) },
       },
     });

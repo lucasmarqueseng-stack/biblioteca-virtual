@@ -10,7 +10,7 @@ export type ImportRow = {
   language: string | null;
   genre: string | null;
   status: BookStatus;
-  hasBook: boolean; // "Tenho"
+  owned: boolean; // "Tenho"
   read: boolean; // "Li"
   error?: string;
 };
@@ -154,14 +154,10 @@ export function parseXlsxBuffer(buf: ArrayBuffer): ParseResult {
       idx.genre >= 0 && row[idx.genre] != null
         ? String(row[idx.genre]).trim() || null
         : null;
-    const hasBook = idx.has >= 0 ? parseYesNo(row[idx.has]) : false;
+    const owned = idx.has >= 0 ? parseYesNo(row[idx.has]) : false;
     const read = idx.read >= 0 ? parseYesNo(row[idx.read]) : false;
 
-    const status: BookStatus = read
-      ? BOOK_STATUS.LIDO
-      : hasBook
-        ? BOOK_STATUS.TENHO
-        : BOOK_STATUS.NAO_LIDO;
+    const status: BookStatus = read ? BOOK_STATUS.LIDO : BOOK_STATUS.NAO_LIDO;
 
     const item: ImportRow = {
       line: r + 1,
@@ -171,7 +167,7 @@ export function parseXlsxBuffer(buf: ArrayBuffer): ParseResult {
       language,
       genre,
       status,
-      hasBook,
+      owned,
       read,
     };
     if (!title) item.error = "Título vazio.";

@@ -47,11 +47,15 @@ export default async function DashboardPage() {
   const totalBooks = books.length;
   const totalRead = books.filter((b) => b.status === BOOK_STATUS.LIDO).length;
   const totalReading = books.filter((b) => b.status === BOOK_STATUS.LENDO).length;
-  const totalHave = books.filter((b) => b.status === BOOK_STATUS.TENHO).length;
+  const totalHave = books.filter((b) => b.owned).length;
+  const totalPagesAcervo = books.reduce((acc, b) => acc + Math.max(b.pages, 0), 0);
   const totalPagesRead = books.reduce((acc, b) => {
     if (b.status === BOOK_STATUS.LIDO && b.pages > 0) return acc + b.pages;
     return acc + b.pagesRead;
   }, 0);
+
+  const pctLidos = totalBooks > 0 ? Math.round((totalRead / totalBooks) * 100) : 0;
+  const pctTenho = totalBooks > 0 ? Math.round((totalHave / totalBooks) * 100) : 0;
 
   const statusData = STATUS_ORDER.map<{ status: BookStatus; count: number }>(
     (status) => ({
@@ -102,21 +106,32 @@ export default async function DashboardPage() {
         <MetricCard
           label="Livros no acervo"
           value={totalBooks}
-          hint="Total cadastrado"
+          hint={`${totalPagesAcervo.toLocaleString("pt-BR")} páginas no total`}
           icon={BookOpen}
-        />
-        <MetricCard
-          label="Lidos"
-          value={totalRead}
-          hint={`${totalReading} em leitura`}
-          icon={TrendingUp}
-          tone="success"
+          href="/livros"
         />
         <MetricCard
           label="Tenho"
           value={totalHave}
-          hint="Na estante, pra ler"
+          hint={
+            totalBooks > 0
+              ? `${pctTenho}% do acervo`
+              : "Na estante"
+          }
           icon={BookmarkCheck}
+          href="/livros?owned=1"
+        />
+        <MetricCard
+          label="Lidos"
+          value={totalRead}
+          hint={
+            totalBooks > 0
+              ? `${pctLidos}% do acervo · ${totalReading} em leitura`
+              : `${totalReading} em leitura`
+          }
+          icon={TrendingUp}
+          tone="success"
+          href="/livros?status=LIDO"
         />
         <MetricCard
           label="Páginas lidas"
@@ -134,6 +149,7 @@ export default async function DashboardPage() {
           }
           icon={Target}
           tone={goalProgress?.isBehind ? "warning" : "default"}
+          href="/metas"
         />
       </section>
 
