@@ -21,9 +21,11 @@ function serialize(book: BookForExport) {
     descricao: book.description,
     capa: book.coverUrl,
     status: book.status,
+    tenho: book.owned,
     classificacao_inicial: book.initialRating,
     paginas: book.pages,
     paginas_lidas: book.pagesRead,
+    concluido_em: book.finishedAt ? book.finishedAt.toISOString() : null,
     avaliacao_media: averageRating(book.reviews),
     total_avaliacoes: book.reviews.length,
   };
@@ -51,9 +53,11 @@ export function booksToCsv(books: BookForExport[]): string {
     "genero",
     "descricao",
     "status",
+    "tenho",
     "classificacao_inicial",
     "paginas",
     "paginas_lidas",
+    "concluido_em",
     "avaliacao_media",
     "total_avaliacoes",
   ];
