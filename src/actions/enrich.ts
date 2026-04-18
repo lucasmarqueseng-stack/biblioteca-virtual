@@ -14,6 +14,8 @@ export type EnrichResult = {
   updatedRating: number;
   noMatch: number;
   errors: number;
+  /** Títulos que não receberam NENHUM metadado (para o usuário ajustar). */
+  notMatchedTitles: string[];
 };
 
 const BATCH_SIZE = 5;
@@ -108,6 +110,7 @@ export async function enrichBooksAction(): Promise<EnrichResult> {
   let updatedRating = 0;
   let noMatch = 0;
   let errors = 0;
+  const notMatchedTitles: string[] = [];
 
   for (let i = 0; i < targets.length; i += BATCH_SIZE) {
     const batch = targets.slice(i, i + BATCH_SIZE);
@@ -124,6 +127,7 @@ export async function enrichBooksAction(): Promise<EnrichResult> {
             !meta.initialRating
           ) {
             noMatch++;
+            notMatchedTitles.push(book.title);
             return;
           }
           const r = await applyBlankOnlyUpdate(
@@ -161,6 +165,7 @@ export async function enrichBooksAction(): Promise<EnrichResult> {
     updatedRating,
     noMatch,
     errors,
+    notMatchedTitles,
   };
 }
 
@@ -182,10 +187,19 @@ export async function enrichSingleBookAction(
       updatedRating: 0,
       noMatch: 0,
       errors: 0,
+      notMatchedTitles: [],
     };
   }
   const author = book.authors[0]?.name ?? "";
   const meta = await fetchBookMetadata(book.title, author);
+  // "Sem match" = API não retornou nenhum metadado (independe de termos
+  // gravado algo — livro com todos os campos já preenchidos pelo usuário
+  // NÃO deve ser sinalizado como sem match se o Google/OL acharam a obra).
+  const apiFoundNothing =
+    !meta.coverUrl &&
+    !meta.pages &&
+    !meta.description &&
+    !meta.initialRating;
   const r = await applyBlankOnlyUpdate(
     bookId,
     meta.coverUrl,
@@ -197,8 +211,6 @@ export async function enrichSingleBookAction(
   const updatedPages = r.wrotePages ? 1 : 0;
   const updatedDescription = r.wroteDescription ? 1 : 0;
   const updatedRating = r.wroteRating ? 1 : 0;
-  const any =
-    updatedCover + updatedPages + updatedDescription + updatedRating;
   revalidatePath("/");
   revalidatePath("/livros");
   revalidatePath(`/livros/${bookId}`);
@@ -209,7 +221,8 @@ export async function enrichSingleBookAction(
     updatedPages,
     updatedDescription,
     updatedRating,
-    noMatch: any === 0 ? 1 : 0,
+    noMatch: apiFoundNothing ? 1 : 0,
     errors: 0,
+    notMatchedTitles: apiFoundNothing ? [book.title] : [],
   };
 }
