@@ -5,10 +5,22 @@
 export type BookMetadata = {
   coverUrl: string | null;
   pages: number | null;
+  description: string | null;
+  initialRating: number | null;
   source: "google-books" | "open-library" | "combined" | null;
 };
 
-const EMPTY: BookMetadata = { coverUrl: null, pages: null, source: null };
+const EMPTY: BookMetadata = {
+  coverUrl: null,
+  pages: null,
+  description: null,
+  initialRating: null,
+  source: null,
+};
+
+function stripHtml(s: string): string {
+  return s.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+}
 
 function stripDiacritics(s: string): string {
   return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
@@ -44,6 +56,8 @@ type GoogleBooksVolume = {
     title?: string;
     authors?: string[];
     pageCount?: number;
+    description?: string;
+    averageRating?: number;
     imageLinks?: {
       thumbnail?: string;
       smallThumbnail?: string;
@@ -93,8 +107,20 @@ export async function fetchFromGoogleBooks(
   if (coverUrl && coverUrl.startsWith("http://")) {
     coverUrl = "https://" + coverUrl.slice(7);
   }
-  if (!coverUrl && !pages) return EMPTY;
-  return { coverUrl, pages, source: "google-books" };
+  // Substitui o parâmetro zoom para obter uma imagem em maior resolução.
+  if (coverUrl) {
+    coverUrl = coverUrl.replace(/&zoom=\d+/, "&zoom=1").replace(/&edge=curl/, "");
+  }
+  const description =
+    typeof info.description === "string" && info.description.trim().length > 0
+      ? stripHtml(info.description).slice(0, 2000)
+      : null;
+  const initialRating =
+    typeof info.averageRating === "number" && info.averageRating > 0
+      ? Math.min(5, Math.max(1, Math.round(info.averageRating)))
+      : null;
+  if (!coverUrl && !pages && !description && !initialRating) return EMPTY;
+  return { coverUrl, pages, description, initialRating, source: "google-books" };
 }
 
 type OpenLibrarySearchDoc = {
@@ -103,6 +129,8 @@ type OpenLibrarySearchDoc = {
   number_of_pages_median?: number | null;
   cover_i?: number | null;
   edition_key?: string[];
+  key?: string; // /works/OLxxxxW
+  ratings_average?: number | null;
 };
 
 type OpenLibrarySearchResponse = {
@@ -113,6 +141,25 @@ type OpenLibraryEdition = {
   number_of_pages?: number;
   covers?: number[];
 };
+
+type OpenLibraryWork = {
+  description?: string | { value?: string };
+};
+
+async function fetchOpenLibraryWorkDescription(
+  workKey: string,
+): Promise<string | null> {
+  const data = (await fetchJson(
+    `https://openlibrary.org${workKey}.json`,
+  )) as OpenLibraryWork | null;
+  if (!data?.description) return null;
+  const raw =
+    typeof data.description === "string"
+      ? data.description
+      : data.description.value ?? "";
+  const clean = stripHtml(raw);
+  return clean.length > 0 ? clean.slice(0, 2000) : null;
+}
 
 async function fetchOpenLibraryEditionPages(
   editionKey: string,
@@ -135,7 +182,8 @@ export async function fetchFromOpenLibrary(
   const params = new URLSearchParams({
     title: cleanTitle,
     limit: "3",
-    fields: "title,author_name,number_of_pages_median,cover_i,edition_key",
+    fields:
+      "title,author_name,number_of_pages_median,cover_i,edition_key,key,ratings_average",
   });
   if (cleanAuthor) params.set("author", cleanAuthor);
 
@@ -164,14 +212,30 @@ export async function fetchFromOpenLibrary(
     pages = await fetchOpenLibraryEditionPages(match.edition_key[0]);
   }
 
-  if (!coverUrl && !pages) return EMPTY;
-  return { coverUrl, pages, source: "open-library" };
+  let description: string | null = null;
+  if (match.key) {
+    description = await fetchOpenLibraryWorkDescription(match.key);
+  }
+
+  const initialRating =
+    typeof match.ratings_average === "number" && match.ratings_average > 0
+      ? Math.min(5, Math.max(1, Math.round(match.ratings_average)))
+      : null;
+
+  if (!coverUrl && !pages && !description && !initialRating) return EMPTY;
+  return {
+    coverUrl,
+    pages,
+    description,
+    initialRating,
+    source: "open-library",
+  };
 }
 
 /**
- * Busca capa e número de páginas combinando Google Books e Open Library.
- * Retorna o melhor resultado possível: para cada campo usamos o primeiro valor
- * não-nulo entre Google Books e Open Library (nessa ordem).
+ * Busca capa, páginas, descrição e avaliação combinando Google Books e Open
+ * Library. Para cada campo usamos o primeiro valor não-nulo entre Google Books
+ * e Open Library (nessa ordem).
  */
 export async function fetchBookMetadata(
   title: string,
@@ -183,8 +247,10 @@ export async function fetchBookMetadata(
   ]);
   const coverUrl = g.coverUrl ?? o.coverUrl ?? null;
   const pages = g.pages ?? o.pages ?? null;
-  if (!coverUrl && !pages) return EMPTY;
+  const description = g.description ?? o.description ?? null;
+  const initialRating = g.initialRating ?? o.initialRating ?? null;
+  if (!coverUrl && !pages && !description && !initialRating) return EMPTY;
   const source: BookMetadata["source"] =
     g.source && o.source ? "combined" : g.source ?? o.source ?? null;
-  return { coverUrl, pages, source };
+  return { coverUrl, pages, description, initialRating, source };
 }

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
+import { BOOK_STATUS } from "@/lib/constants";
 import {
   buildDescription,
   parseXlsxBuffer,
@@ -117,6 +118,7 @@ export async function importBooksAction(
           status: row.status,
           pages: 0,
           pagesRead: 0,
+          finishedAt: row.status === BOOK_STATUS.LIDO ? new Date() : null,
           authors: { connect: authorIds.map((id) => ({ id })) },
         },
       });

@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { BookOpen, Library, PlusCircle, Target, TrendingUp } from "lucide-react";
+import {
+  BookmarkCheck,
+  BookOpen,
+  Library,
+  PlusCircle,
+  Target,
+  TrendingUp,
+} from "lucide-react";
 
 import { BookCard } from "@/components/book-card";
 import {
@@ -22,7 +29,7 @@ export const dynamic = "force-dynamic";
 
 export default async function DashboardPage() {
   const currentYear = new Date().getFullYear();
-  const [books, goal] = await Promise.all([
+  const [books, goal, allGoals] = await Promise.all([
     prisma.book.findMany({
       include: { authors: true, reviews: true },
       orderBy: { updatedAt: "desc" },
@@ -31,11 +38,16 @@ export default async function DashboardPage() {
       where: { year: currentYear },
       include: { books: true },
     }),
+    prisma.readingGoal.findMany({
+      select: { year: true },
+      orderBy: { year: "desc" },
+    }),
   ]);
 
   const totalBooks = books.length;
   const totalRead = books.filter((b) => b.status === BOOK_STATUS.LIDO).length;
   const totalReading = books.filter((b) => b.status === BOOK_STATUS.LENDO).length;
+  const totalHave = books.filter((b) => b.status === BOOK_STATUS.TENHO).length;
   const totalPagesRead = books.reduce((acc, b) => {
     if (b.status === BOOK_STATUS.LIDO && b.pages > 0) return acc + b.pages;
     return acc + b.pagesRead;
@@ -86,7 +98,7 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <MetricCard
           label="Livros no acervo"
           value={totalBooks}
@@ -99,6 +111,12 @@ export default async function DashboardPage() {
           hint={`${totalReading} em leitura`}
           icon={TrendingUp}
           tone="success"
+        />
+        <MetricCard
+          label="Tenho"
+          value={totalHave}
+          hint="Na estante, pra ler"
+          icon={BookmarkCheck}
         />
         <MetricCard
           label="Páginas lidas"
@@ -151,7 +169,7 @@ export default async function DashboardPage() {
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
             {recent.map((book) => (
-              <BookCard key={book.id} book={book} />
+              <BookCard key={book.id} book={book} goals={allGoals} />
             ))}
           </div>
         )}
