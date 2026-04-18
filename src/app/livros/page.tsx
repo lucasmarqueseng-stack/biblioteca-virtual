@@ -28,6 +28,7 @@ type SearchParams = Promise<{
   status?: string;
   genre?: string;
   order?: BookOrderKey;
+  owned?: string;
 }>;
 
 export default async function BooksPage({
@@ -40,6 +41,7 @@ export default async function BooksPage({
   const status = params.status ?? "";
   const genre = params.genre ?? "";
   const order: BookOrderKey = (params.order as BookOrderKey) || "recent";
+  const ownedFilter = params.owned === "1" || params.owned === "true";
 
   const where: {
     AND: Array<Record<string, unknown>>;
@@ -53,6 +55,7 @@ export default async function BooksPage({
     });
   if (status && status !== "all") where.AND.push({ status });
   if (genre && genre !== "all") where.AND.push({ genre });
+  if (ownedFilter) where.AND.push({ owned: true });
 
   const orderBy =
     order === "title-asc"
@@ -98,6 +101,10 @@ export default async function BooksPage({
           <p className="mt-1 text-sm text-muted-foreground">
             {books.length}{" "}
             {books.length === 1 ? "livro encontrado" : "livros encontrados"}
+            {ownedFilter ? " · filtrando apenas “Tenho”" : ""}
+            {status && status !== "all"
+              ? ` · status: ${STATUS_LABELS[status as (typeof STATUS_ORDER)[number]] ?? status}`
+              : ""}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -179,7 +186,7 @@ export default async function BooksPage({
             </SelectContent>
           </Select>
         </div>
-        <div className="sm:col-span-3">
+        <div className="sm:col-span-2">
           <label className="mb-1 block text-xs font-medium text-muted-foreground">
             Ordenar por
           </label>
@@ -198,6 +205,18 @@ export default async function BooksPage({
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="flex items-end sm:col-span-1">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="owned"
+              value="1"
+              defaultChecked={ownedFilter}
+              className="h-4 w-4 rounded border-border"
+            />
+            Apenas “Tenho”
+          </label>
         </div>
         <div className="flex items-end gap-2 sm:col-span-1">
           <button

@@ -9,16 +9,23 @@ import {
   Star,
 } from "lucide-react";
 
+import { BookOwnedToggle } from "@/components/book-owned-toggle";
 import { BookStatusSelect } from "@/components/book-status-select";
 import { DeleteBookDialog } from "@/components/delete-book-dialog";
 import { DeleteReviewButton } from "@/components/delete-review-button";
+import { FinishedAtEditor } from "@/components/finished-at-editor";
 import { PagesReadInput } from "@/components/pages-read-input";
 import { RatingStars } from "@/components/rating-stars";
 import { ReviewForm } from "@/components/review-form";
 import { StatusBadge } from "@/components/status-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { BOOK_STATUS } from "@/lib/constants";
+import {
+  BOOK_STATUS,
+  OWNED_BADGE_CLASS,
+  OWNED_LABEL,
+} from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -92,6 +99,10 @@ export default async function BookDetailPage({
               Status atual
             </div>
             <BookStatusSelect bookId={book.id} value={book.status} />
+            <BookOwnedToggle bookId={book.id} owned={book.owned} />
+            {book.status === BOOK_STATUS.LIDO ? (
+              <FinishedAtEditor bookId={book.id} value={book.finishedAt} />
+            ) : null}
             {book.pages > 0 ? (
               <>
                 <PagesReadInput
@@ -115,6 +126,16 @@ export default async function BookDetailPage({
           <div>
             <div className="flex flex-wrap items-center gap-3">
               <StatusBadge status={book.status} />
+              {book.owned ? (
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium",
+                    OWNED_BADGE_CLASS,
+                  )}
+                >
+                  {OWNED_LABEL}
+                </span>
+              ) : null}
               {book.genre ? (
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                   <Library className="h-3 w-3" />

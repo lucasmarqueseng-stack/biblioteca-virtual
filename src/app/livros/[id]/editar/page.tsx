@@ -37,9 +37,11 @@ export default async function EditBookPage({
             description: book.description,
             coverUrl: book.coverUrl,
             status: book.status,
+            owned: book.owned,
             initialRating: book.initialRating,
             pages: book.pages,
             pagesRead: book.pagesRead,
+            finishedAt: book.finishedAt,
           }}
         />
       </div>

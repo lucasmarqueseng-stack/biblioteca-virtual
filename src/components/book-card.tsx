@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { BookOpen } from "lucide-react";
+import { BookmarkCheck, BookOpen } from "lucide-react";
 
 import type { Author, Book, Review } from "@prisma/client";
 
 import { BookCardActions } from "@/components/book-card-actions";
 import { RatingStars } from "@/components/rating-stars";
 import { StatusBadge } from "@/components/status-badge";
+import { OWNED_BADGE_CLASS, OWNED_LABEL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 type BookCardBook = Book & { authors: Author[]; reviews: Review[] };
@@ -46,8 +47,20 @@ export function BookCard({
             <BookOpen className="h-12 w-12 text-muted-foreground/50" />
           </div>
         )}
-        <div className="absolute left-2 top-2">
+        <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
           <StatusBadge status={book.status} />
+          {book.owned ? (
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                OWNED_BADGE_CLASS,
+              )}
+              title={OWNED_LABEL}
+            >
+              <BookmarkCheck className="h-3 w-3" />
+              {OWNED_LABEL}
+            </span>
+          ) : null}
         </div>
         {book.pages > 0 && progress > 0 && progress < 1 ? (
           <div className="absolute inset-x-0 bottom-0 h-1 bg-black/30">
@@ -83,6 +96,7 @@ export function BookCard({
           <BookCardActions
             bookId={book.id}
             status={book.status}
+            owned={book.owned}
             initialRating={book.initialRating}
             goals={goals}
           />

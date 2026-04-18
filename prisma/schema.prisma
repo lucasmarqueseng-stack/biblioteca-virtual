@@ -26,6 +26,7 @@ model Book {
   description   String?
   coverUrl      String?
   status        String   @default("NAO_LIDO")
+  owned         Boolean  @default(false)
   initialRating Int?
   pages         Int      @default(0)
   pagesRead     Int      @default(0)
@@ -38,6 +39,7 @@ model Book {
   goals   ReadingGoal[] @relation("GoalBooks")
 
   @@index([status])
+  @@index([owned])
   @@index([genre])
   @@index([finishedAt])
 }

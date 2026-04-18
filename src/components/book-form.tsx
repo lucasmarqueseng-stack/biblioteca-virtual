@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -32,10 +32,22 @@ type BookFormValues = {
   description?: string | null;
   coverUrl?: string | null;
   status?: string;
+  owned?: boolean;
   initialRating?: number | null;
   pages?: number;
   pagesRead?: number;
+  finishedAt?: Date | string | null;
 };
+
+function toDateInput(value: Date | string | null | undefined): string {
+  if (!value) return "";
+  const d = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(d.getTime())) return "";
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
 
 export function BookForm({ initial }: { initial?: BookFormValues }) {
   const router = useRouter();
@@ -46,6 +58,11 @@ export function BookForm({ initial }: { initial?: BookFormValues }) {
   const [state, formAction, pending] = useActionState<ActionResult | null, FormData>(
     action,
     null,
+  );
+  const [status, setStatus] = useState<string>(initial?.status ?? "NAO_LIDO");
+  const [owned, setOwned] = useState<boolean>(initial?.owned ?? false);
+  const [finishedAt, setFinishedAt] = useState<string>(
+    toDateInput(initial?.finishedAt),
   );
 
   useEffect(() => {
@@ -124,7 +141,11 @@ export function BookForm({ initial }: { initial?: BookFormValues }) {
 
         <div className="space-y-2">
           <Label htmlFor="status">Status</Label>
-          <Select name="status" defaultValue={initial?.status ?? "NAO_LIDO"}>
+          <Select
+            name="status"
+            value={status}
+            onValueChange={(v) => setStatus(v ?? "NAO_LIDO")}
+          >
             <SelectTrigger id="status">
               <SelectValue placeholder="Selecione" />
             </SelectTrigger>
@@ -137,6 +158,39 @@ export function BookForm({ initial }: { initial?: BookFormValues }) {
             </SelectContent>
           </Select>
         </div>
+
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              name="owned"
+              value="true"
+              checked={owned}
+              onChange={(e) => setOwned(e.target.checked)}
+              className="h-4 w-4 rounded border-border"
+            />
+            Tenho este livro
+          </Label>
+          <p className="text-xs text-muted-foreground">
+            Marque se o livro está na sua estante (pode estar lido ou não).
+          </p>
+        </div>
+
+        {status === "LIDO" ? (
+          <div className="space-y-2">
+            <Label htmlFor="finishedAt">Data de término</Label>
+            <Input
+              id="finishedAt"
+              name="finishedAt"
+              type="date"
+              value={finishedAt}
+              onChange={(e) => setFinishedAt(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Deixe em branco para usar a data de hoje.
+            </p>
+          </div>
+        ) : null}
 
         <div className="space-y-2">
           <Label>Classificação inicial</Label>
