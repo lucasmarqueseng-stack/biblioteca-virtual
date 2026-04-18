@@ -3,6 +3,7 @@ import { Download, FileJson, PlusCircle } from "lucide-react";
 
 import { BookCard } from "@/components/book-card";
 import { EmptyState } from "@/components/empty-state";
+import { EnrichBooksButton } from "@/components/enrich-books-button";
 import { buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -96,6 +97,7 @@ export default async function BooksPage({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <EnrichBooksButton />
           <Link
             href="/api/export?format=csv"
             className={buttonVariants({ variant: "outline" })}
