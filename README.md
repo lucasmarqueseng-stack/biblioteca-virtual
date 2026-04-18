@@ -40,9 +40,9 @@ git clone https://github.com/lucasmarqueseng-stack/biblioteca-virtual.git
 cd biblioteca-virtual
 
 # 2. Mudar para o branch da v2
-git checkout devin/1776473808-biblioteca-virtual-v2
+git checkout devin/1776470693-biblioteca-virtual
 
-# 3. Instalar dependências
+# 3. Instalar dependências (roda `prisma generate` automaticamente)
 npm install
 
 # 4. Copiar o arquivo de variáveis de ambiente (define DATABASE_URL para o SQLite)
@@ -50,8 +50,7 @@ cp .env.example .env                # Linux/macOS
 # copy .env.example .env            # Windows (cmd)
 # Copy-Item .env.example .env       # Windows (PowerShell)
 
-# 5. Criar o banco SQLite e popular com dados de exemplo
-npx prisma migrate dev --name init
+# 5. Popular o banco com dados de exemplo (apenas na primeira vez)
 npx prisma db seed
 
 # 6. Iniciar o servidor de desenvolvimento
@@ -59,6 +58,8 @@ npm run dev
 ```
 
 Abra [http://localhost:3000](http://localhost:3000). O banco `prisma/dev.db` é criado automaticamente.
+
+O script `npm run dev` tem um hook `predev` que roda `prisma migrate deploy && prisma generate`, então migrações novas (ex.: após um `git pull`) são aplicadas automaticamente e o Prisma Client é regenerado antes do servidor subir.
 
 ### Scripts úteis
 
