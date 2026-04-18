@@ -28,11 +28,11 @@ export function BookCard({
     book.pages > 0 ? Math.min(book.pagesRead / book.pages, 1) : 0;
 
   return (
-    <div className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg">
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_1px_2px_rgba(74,40,26,0.04),0_4px_16px_-6px_rgba(74,40,26,0.08)] transition hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-[0_4px_12px_-2px_rgba(74,40,26,0.12),0_10px_24px_-8px_rgba(74,40,26,0.18)]">
       <Link
         href={`/livros/${book.id}`}
         aria-label={`Abrir detalhes de ${book.title}`}
-        className="relative block aspect-[2/3] overflow-hidden bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900"
+        className="relative block aspect-[2/3] overflow-hidden bg-gradient-to-br from-[oklch(0.92_0.03_80)] to-[oklch(0.84_0.05_70)]"
       >
         {book.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -71,21 +71,21 @@ export function BookCard({
           </div>
         ) : null}
       </Link>
-      <div className="flex flex-1 flex-col gap-1 p-3">
+      <div className="flex flex-1 flex-col gap-1 p-3.5">
         <Link
           href={`/livros/${book.id}`}
-          className="line-clamp-2 text-sm font-semibold leading-tight hover:underline"
+          className="font-heading line-clamp-2 text-[0.95rem] font-semibold leading-snug tracking-tight hover:underline"
         >
           {book.title}
         </Link>
-        <p className="line-clamp-1 text-xs text-muted-foreground">
+        <p className="line-clamp-1 text-xs italic text-muted-foreground">
           {book.authors.map((a) => a.name).join(", ") || "—"}
         </p>
-        <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+        <div className="mt-auto flex items-center justify-between gap-2 pt-2.5">
           <RatingStars value={averageRating} size="sm" readOnly />
           <span
             className={cn(
-              "text-xs",
+              "font-heading text-xs",
               book.year ? "text-muted-foreground" : "text-transparent",
             )}
           >

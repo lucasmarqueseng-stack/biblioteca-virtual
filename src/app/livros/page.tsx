@@ -97,8 +97,13 @@ export default async function BooksPage({
     <div className="space-y-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Biblioteca</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-primary">
+            Acervo
+          </p>
+          <h1 className="font-heading mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
+            Biblioteca
+          </h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
             {books.length}{" "}
             {books.length === 1 ? "livro encontrado" : "livros encontrados"}
             {ownedFilter ? " · filtrando apenas “Tenho”" : ""}
@@ -132,7 +137,7 @@ export default async function BooksPage({
 
       <form
         method="get"
-        className="grid gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm sm:grid-cols-4"
+        className="grid gap-3 rounded-2xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_rgba(74,40,26,0.04)] sm:grid-cols-4"
       >
         <div className="sm:col-span-2">
           <label className="mb-1 block text-xs font-medium text-muted-foreground">

@@ -17,11 +17,13 @@ export function GoalProgressCard({ progress }: { progress: GoalProgress }) {
   const pagePct = Math.round(progress.pageCompletion * 100);
 
   return (
-    <div className="space-y-5 rounded-2xl border border-border bg-card p-6 shadow-sm">
+    <div className="space-y-5 rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgba(74,40,26,0.04)]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-xl font-semibold">Meta de {goal.year}</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="font-heading text-2xl font-semibold tracking-tight">
+            Meta de {goal.year}
+          </h3>
+          <p className="text-sm italic text-muted-foreground">
             Acompanhe seu progresso anual
           </p>
         </div>
@@ -67,17 +69,19 @@ export function GoalProgressCard({ progress }: { progress: GoalProgress }) {
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
-        <div className="rounded-xl border border-border/60 bg-muted/40 p-3">
-          <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="rounded-xl border border-border/60 bg-muted/40 p-3.5">
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.08em] text-muted-foreground">
             <CalendarDays className="h-4 w-4" /> Dias restantes no ano
           </div>
-          <div className="mt-1 text-2xl font-semibold">{daysLeftInYear}</div>
+          <div className="font-heading mt-1.5 text-3xl font-semibold tracking-tight">
+            {daysLeftInYear}
+          </div>
         </div>
-        <div className="rounded-xl border border-border/60 bg-muted/40 p-3">
-          <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="rounded-xl border border-border/60 bg-muted/40 p-3.5">
+          <div className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.08em] text-muted-foreground">
             <Target className="h-4 w-4" /> Páginas/dia para bater a meta
           </div>
-          <div className="mt-1 text-2xl font-semibold">
+          <div className="font-heading mt-1.5 text-3xl font-semibold tracking-tight">
             {pagesPerDayRequired.toLocaleString("pt-BR")}
           </div>
         </div>

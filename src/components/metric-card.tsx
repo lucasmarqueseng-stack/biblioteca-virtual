@@ -21,7 +21,7 @@ export function MetricCard({
   const content = (
     <>
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-medium text-muted-foreground">
+        <span className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
           {label}
         </span>
         {Icon ? (
@@ -29,27 +29,31 @@ export function MetricCard({
             className={cn(
               "h-5 w-5",
               tone === "success"
-                ? "text-emerald-500"
+                ? "text-[oklch(0.55_0.1_145)]"
                 : tone === "warning"
-                  ? "text-amber-500"
+                  ? "text-[oklch(0.65_0.12_70)]"
                   : "text-primary",
             )}
           />
         ) : null}
       </div>
-      <div className="mt-2 text-3xl font-semibold tracking-tight">{value}</div>
+      <div className="font-heading mt-2.5 text-4xl font-semibold leading-none tracking-tight">
+        {value}
+      </div>
       {hint ? (
-        <div className="mt-1 text-xs text-muted-foreground">{hint}</div>
+        <div className="mt-2 text-xs leading-snug text-muted-foreground">
+          {hint}
+        </div>
       ) : null}
     </>
   );
 
   const classes = cn(
-    "rounded-2xl border border-border bg-card p-5 shadow-sm",
-    tone === "success" && "border-emerald-500/40",
-    tone === "warning" && "border-amber-500/40",
+    "rounded-2xl border border-border/70 bg-card p-5 shadow-[0_1px_2px_rgba(74,40,26,0.04)]",
+    tone === "success" && "border-[oklch(0.55_0.1_145)]/35",
+    tone === "warning" && "border-[oklch(0.65_0.12_70)]/45",
     href &&
-      "transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+      "transition hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-[0_4px_12px_-2px_rgba(74,40,26,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
   );
 
   if (href) {

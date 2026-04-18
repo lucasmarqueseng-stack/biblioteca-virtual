@@ -53,14 +53,21 @@ export default async function GoalsPage({
   return (
     <div className="space-y-10">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Metas de leitura</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-xs font-medium uppercase tracking-[0.14em] text-primary">
+          Hábitos
+        </p>
+        <h1 className="font-heading mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
+          Metas de leitura
+        </h1>
+        <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
           Defina metas anuais, associe livros e acompanhe o ritmo de leitura.
         </p>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold">Definir meta de {year}</h2>
+      <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgba(74,40,26,0.04)]">
+        <h2 className="font-heading mb-4 text-xl font-semibold tracking-tight">
+          Definir meta de {year}
+        </h2>
         <GoalForm
           year={year}
           targetBooks={goal?.targetBooks ?? null}
@@ -73,20 +80,22 @@ export default async function GoalsPage({
           <GoalProgressCard progress={progress} />
 
           <div className="grid gap-6 lg:grid-cols-2">
-            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-              <h2 className="mb-2 text-lg font-semibold">
+            <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgba(74,40,26,0.04)]">
+              <h2 className="font-heading mb-3 text-xl font-semibold tracking-tight">
                 Livros concluídos por mês
               </h2>
               <MonthlyBooksChart data={monthly} />
             </div>
-            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-              <h2 className="mb-2 text-lg font-semibold">Páginas por mês</h2>
+            <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgba(74,40,26,0.04)]">
+              <h2 className="font-heading mb-3 text-xl font-semibold tracking-tight">
+                Páginas por mês
+              </h2>
               <MonthlyPagesChart data={monthly} />
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-            <h2 className="mb-4 text-lg font-semibold">
+          <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgba(74,40,26,0.04)]">
+            <h2 className="font-heading mb-4 text-xl font-semibold tracking-tight">
               Livros associados à meta ({selected.length})
             </h2>
             <GoalBookManager
@@ -110,7 +119,7 @@ export default async function GoalsPage({
 
       <section>
         <div className="mb-4">
-          <h2 className="text-2xl font-bold tracking-tight">
+          <h2 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
             Histórico por ano
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
