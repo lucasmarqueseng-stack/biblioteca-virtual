@@ -82,6 +82,9 @@ export async function createBookAction(
   }
   const authorConnects = await connectAuthors(parsed.data.authors);
 
+  const finishedAt =
+    parsed.data.status === BOOK_STATUS.LIDO ? new Date() : null;
+
   const book = await prisma.book.create({
     data: {
       title: parsed.data.title,
@@ -93,6 +96,7 @@ export async function createBookAction(
       initialRating: parsed.data.initialRating ?? null,
       pages: parsed.data.pages,
       pagesRead: parsed.data.pagesRead,
+      finishedAt,
       authors: { connect: authorConnects },
     },
   });
@@ -121,6 +125,23 @@ export async function updateBookAction(
   }
   const authorConnects = await connectAuthors(parsed.data.authors);
 
+  const existing = await prisma.book.findUnique({
+    where: { id },
+    select: { status: true, finishedAt: true },
+  });
+  if (!existing) {
+    return { ok: false, error: "Livro não encontrado." };
+  }
+
+  // Sincroniza `finishedAt` com a mesma lógica de `setBookStatusAction`:
+  // entrando em "Lido" define a data (se ainda não tiver), saindo limpa.
+  let finishedAt: Date | null | undefined = undefined;
+  if (parsed.data.status === BOOK_STATUS.LIDO) {
+    if (!existing.finishedAt) finishedAt = new Date();
+  } else if (existing.status === BOOK_STATUS.LIDO) {
+    finishedAt = null;
+  }
+
   await prisma.book.update({
     where: { id },
     data: {
@@ -133,6 +154,7 @@ export async function updateBookAction(
       initialRating: parsed.data.initialRating ?? null,
       pages: parsed.data.pages,
       pagesRead: parsed.data.pagesRead,
+      ...(finishedAt !== undefined ? { finishedAt } : {}),
       authors: { set: authorConnects },
     },
   });
