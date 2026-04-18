@@ -90,22 +90,29 @@ export function computeGoalProgress(
   };
 }
 
-/** Agrega livros concluídos por mês, usando `updatedAt` como proxy. */
+const MONTH_LABELS = [
+  "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
+  "Jul", "Ago", "Set", "Out", "Nov", "Dez",
+];
+
+/** Retorna a data "quando o livro foi lido", preferindo `finishedAt`. */
+export function bookFinishedDate(book: Pick<Book, "finishedAt" | "updatedAt" | "status">): Date | null {
+  if (book.status !== BOOK_STATUS.LIDO) return null;
+  return book.finishedAt ?? book.updatedAt;
+}
+
+/** Agrega livros concluídos por mês, usando `finishedAt` (fallback: `updatedAt`). */
 export function monthlyProgress(goal: GoalWithBooks) {
   const months = Array.from({ length: 12 }, (_, i) => ({
     mes: i + 1,
-    label: [
-      "Jan", "Fev", "Mar", "Abr", "Mai", "Jun",
-      "Jul", "Ago", "Set", "Out", "Nov", "Dez",
-    ][i],
+    label: MONTH_LABELS[i],
     livros: 0,
     paginas: 0,
   }));
 
   for (const book of goal.books) {
-    if (book.status !== BOOK_STATUS.LIDO) continue;
-    const dt = book.updatedAt;
-    if (dt.getFullYear() !== goal.year) continue;
+    const dt = bookFinishedDate(book);
+    if (!dt || dt.getFullYear() !== goal.year) continue;
     const idx = dt.getMonth();
     months[idx].livros += 1;
     months[idx].paginas += Math.max(book.pages, 0);
@@ -118,4 +125,47 @@ export function monthlyProgress(goal: GoalWithBooks) {
     paginasAcum += m.paginas;
     return { ...m, livrosAcumulado: livrosAcum, paginasAcumulado: paginasAcum };
   });
+}
+
+export type YearSummary = {
+  year: number;
+  totalBooks: number;
+  totalPages: number;
+  months: { mes: number; label: string; livros: number; paginas: number }[];
+};
+
+/** Agrega TODOS os livros lidos (não só os de metas) por ano+mês. */
+export function summarizeFinishedByYear(
+  books: Book[],
+): YearSummary[] {
+  const byYear = new Map<number, YearSummary>();
+
+  for (const book of books) {
+    const dt = bookFinishedDate(book);
+    if (!dt) continue;
+    const year = dt.getFullYear();
+    let summary = byYear.get(year);
+    if (!summary) {
+      summary = {
+        year,
+        totalBooks: 0,
+        totalPages: 0,
+        months: Array.from({ length: 12 }, (_, i) => ({
+          mes: i + 1,
+          label: MONTH_LABELS[i],
+          livros: 0,
+          paginas: 0,
+        })),
+      };
+      byYear.set(year, summary);
+    }
+    summary.totalBooks += 1;
+    const pages = Math.max(book.pages, 0);
+    summary.totalPages += pages;
+    const idx = dt.getMonth();
+    summary.months[idx].livros += 1;
+    summary.months[idx].paginas += pages;
+  }
+
+  return Array.from(byYear.values()).sort((a, b) => b.year - a.year);
 }

@@ -155,29 +155,87 @@ export async function deleteBookAction(id: number): Promise<void> {
 export async function setBookStatusAction(
   id: number,
   status: string,
+  finishedAt?: Date | null,
 ): Promise<ActionResult> {
   const valid = Object.values(BOOK_STATUS);
   if (!valid.includes(status as (typeof valid)[number])) {
     return { ok: false, error: "Status inválido." };
   }
-  const book = await prisma.book.update({
-    where: { id },
-    data: { status },
-  });
+  const existing = await prisma.book.findUnique({ where: { id } });
+  if (!existing) return { ok: false, error: "Livro não encontrado." };
 
-  // Ao marcar como "Lido", preenche `pagesRead` com o total de páginas
-  // para que a meta e os gráficos reflitam o livro concluído.
-  if (status === BOOK_STATUS.LIDO && book.pages > 0 && book.pagesRead !== book.pages) {
-    await prisma.book.update({
-      where: { id },
-      data: { pagesRead: book.pages },
-    });
+  const data: {
+    status: string;
+    pagesRead?: number;
+    finishedAt?: Date | null;
+  } = { status };
+
+  if (status === BOOK_STATUS.LIDO) {
+    // Ao marcar como "Lido", preenche `pagesRead` com o total de páginas
+    // para que a meta e os gráficos reflitam o livro concluído.
+    if (existing.pages > 0 && existing.pagesRead !== existing.pages) {
+      data.pagesRead = existing.pages;
+    }
+    // Define finishedAt: se o caller passou, usa; senão, só define se ainda
+    // estiver nulo (primeira vez marcando como lido).
+    if (finishedAt !== undefined) {
+      data.finishedAt = finishedAt;
+    } else if (!existing.finishedAt) {
+      data.finishedAt = new Date();
+    }
+  } else {
+    // Se saiu de "Lido", limpa o finishedAt
+    if (existing.status === BOOK_STATUS.LIDO) {
+      data.finishedAt = null;
+    }
   }
+
+  await prisma.book.update({ where: { id }, data });
 
   revalidatePath("/");
   revalidatePath("/livros");
   revalidatePath(`/livros/${id}`);
   revalidatePath("/metas");
+  return { ok: true };
+}
+
+export async function setFinishedAtAction(
+  id: number,
+  finishedAt: Date | null,
+): Promise<ActionResult> {
+  const existing = await prisma.book.findUnique({ where: { id } });
+  if (!existing) return { ok: false, error: "Livro não encontrado." };
+  if (existing.status !== BOOK_STATUS.LIDO) {
+    return { ok: false, error: "Só é possível definir a data em livros marcados como lidos." };
+  }
+  await prisma.book.update({
+    where: { id },
+    data: { finishedAt },
+  });
+  revalidatePath("/");
+  revalidatePath("/livros");
+  revalidatePath(`/livros/${id}`);
+  revalidatePath("/metas");
+  return { ok: true };
+}
+
+export async function rateBookAction(
+  id: number,
+  rating: number,
+): Promise<ActionResult> {
+  if (!Number.isFinite(rating) || rating < 0 || rating > 5) {
+    return { ok: false, error: "Avaliação inválida." };
+  }
+  const r = Math.trunc(rating);
+  // Estratégia simples: grava como initialRating. Avaliações em estrela rápidas
+  // não precisam de review textual; quem quiser comentar usa a página de detalhe.
+  await prisma.book.update({
+    where: { id },
+    data: { initialRating: r === 0 ? null : r },
+  });
+  revalidatePath("/");
+  revalidatePath("/livros");
+  revalidatePath(`/livros/${id}`);
   return { ok: true };
 }
 

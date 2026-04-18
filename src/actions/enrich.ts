@@ -10,6 +10,8 @@ export type EnrichResult = {
   processed: number;
   updatedCover: number;
   updatedPages: number;
+  updatedDescription: number;
+  updatedRating: number;
   noMatch: number;
   errors: number;
 };
@@ -21,36 +23,63 @@ function sleep(ms: number) {
   return new Promise<void>((r) => setTimeout(r, ms));
 }
 
+type FieldResult = {
+  wroteCover: boolean;
+  wrotePages: boolean;
+  wroteDescription: boolean;
+  wroteRating: boolean;
+};
+
 /**
  * Aplica o update apenas se os campos alvo ainda estão "em branco" no banco
- * (coverUrl=null / pages=0), usando `updateMany` com a cláusula de guarda.
- * Isso evita TOCTOU: mesmo que o usuário tenha editado o livro manualmente
- * entre a leitura inicial e a hora de gravar, nunca sobrescrevemos o valor
- * que ele acabou de definir.
+ * (coverUrl=null / pages=0 / description=null / initialRating=null), usando
+ * `updateMany` com a cláusula de guarda. Isso evita TOCTOU: mesmo que o
+ * usuário tenha editado o livro manualmente entre a leitura inicial e a hora
+ * de gravar, nunca sobrescrevemos o valor que ele acabou de definir.
  */
 async function applyBlankOnlyUpdate(
   bookId: number,
   coverUrl: string | null,
   pages: number | null,
-): Promise<{ wroteCover: boolean; wrotePages: boolean }> {
-  let wroteCover = false;
-  let wrotePages = false;
+  description: string | null,
+  initialRating: number | null,
+): Promise<FieldResult> {
+  const result: FieldResult = {
+    wroteCover: false,
+    wrotePages: false,
+    wroteDescription: false,
+    wroteRating: false,
+  };
 
   if (coverUrl) {
     const res = await prisma.book.updateMany({
       where: { id: bookId, coverUrl: null },
       data: { coverUrl },
     });
-    wroteCover = res.count > 0;
+    result.wroteCover = res.count > 0;
   }
   if (pages) {
     const res = await prisma.book.updateMany({
       where: { id: bookId, pages: 0 },
       data: { pages },
     });
-    wrotePages = res.count > 0;
+    result.wrotePages = res.count > 0;
   }
-  return { wroteCover, wrotePages };
+  if (description) {
+    const res = await prisma.book.updateMany({
+      where: { id: bookId, description: null },
+      data: { description },
+    });
+    result.wroteDescription = res.count > 0;
+  }
+  if (initialRating) {
+    const res = await prisma.book.updateMany({
+      where: { id: bookId, initialRating: null },
+      data: { initialRating },
+    });
+    result.wroteRating = res.count > 0;
+  }
+  return result;
 }
 
 /**
@@ -62,7 +91,12 @@ async function applyBlankOnlyUpdate(
 export async function enrichBooksAction(): Promise<EnrichResult> {
   const targets = await prisma.book.findMany({
     where: {
-      OR: [{ coverUrl: null }, { pages: 0 }],
+      OR: [
+        { coverUrl: null },
+        { pages: 0 },
+        { description: null },
+        { initialRating: null },
+      ],
     },
     include: { authors: { take: 1 } },
     orderBy: { id: "asc" },
@@ -70,6 +104,8 @@ export async function enrichBooksAction(): Promise<EnrichResult> {
 
   let updatedCover = 0;
   let updatedPages = 0;
+  let updatedDescription = 0;
+  let updatedRating = 0;
   let noMatch = 0;
   let errors = 0;
 
@@ -81,17 +117,26 @@ export async function enrichBooksAction(): Promise<EnrichResult> {
         const author = book.authors[0]?.name ?? "";
         try {
           const meta = await fetchBookMetadata(book.title, author);
-          if (!meta.coverUrl && !meta.pages) {
+          if (
+            !meta.coverUrl &&
+            !meta.pages &&
+            !meta.description &&
+            !meta.initialRating
+          ) {
             noMatch++;
             return;
           }
-          const { wroteCover, wrotePages } = await applyBlankOnlyUpdate(
+          const r = await applyBlankOnlyUpdate(
             book.id,
             meta.coverUrl,
             meta.pages,
+            meta.description,
+            meta.initialRating,
           );
-          if (wroteCover) updatedCover++;
-          if (wrotePages) updatedPages++;
+          if (r.wroteCover) updatedCover++;
+          if (r.wrotePages) updatedPages++;
+          if (r.wroteDescription) updatedDescription++;
+          if (r.wroteRating) updatedRating++;
         } catch {
           errors++;
         }
@@ -112,6 +157,8 @@ export async function enrichBooksAction(): Promise<EnrichResult> {
     processed: targets.length,
     updatedCover,
     updatedPages,
+    updatedDescription,
+    updatedRating,
     noMatch,
     errors,
   };
@@ -131,19 +178,27 @@ export async function enrichSingleBookAction(
       processed: 0,
       updatedCover: 0,
       updatedPages: 0,
+      updatedDescription: 0,
+      updatedRating: 0,
       noMatch: 0,
       errors: 0,
     };
   }
   const author = book.authors[0]?.name ?? "";
   const meta = await fetchBookMetadata(book.title, author);
-  const { wroteCover, wrotePages } = await applyBlankOnlyUpdate(
+  const r = await applyBlankOnlyUpdate(
     bookId,
     meta.coverUrl,
     meta.pages,
+    meta.description,
+    meta.initialRating,
   );
-  const updatedCover = wroteCover ? 1 : 0;
-  const updatedPages = wrotePages ? 1 : 0;
+  const updatedCover = r.wroteCover ? 1 : 0;
+  const updatedPages = r.wrotePages ? 1 : 0;
+  const updatedDescription = r.wroteDescription ? 1 : 0;
+  const updatedRating = r.wroteRating ? 1 : 0;
+  const any =
+    updatedCover + updatedPages + updatedDescription + updatedRating;
   revalidatePath("/");
   revalidatePath("/livros");
   revalidatePath(`/livros/${bookId}`);
@@ -152,7 +207,9 @@ export async function enrichSingleBookAction(
     processed: 1,
     updatedCover,
     updatedPages,
-    noMatch: updatedCover + updatedPages === 0 ? 1 : 0,
+    updatedDescription,
+    updatedRating,
+    noMatch: any === 0 ? 1 : 0,
     errors: 0,
   };
 }

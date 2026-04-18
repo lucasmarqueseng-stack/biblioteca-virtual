@@ -10,7 +10,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { STATUS_LABELS, STATUS_ORDER } from "@/lib/constants";
+import {
+  STATUS_LABELS,
+  STATUS_ORDER,
+  type BookStatus,
+} from "@/lib/constants";
 import { setBookStatusAction } from "@/actions/books";
 
 export function BookStatusSelect({
@@ -34,10 +38,15 @@ export function BookStatusSelect({
     });
   }
 
+  const currentLabel =
+    (value as BookStatus) in STATUS_LABELS
+      ? STATUS_LABELS[value as BookStatus]
+      : "Selecionar";
+
   return (
     <Select value={value} onValueChange={onChange} disabled={pending}>
       <SelectTrigger className="w-[160px]">
-        <SelectValue />
+        <SelectValue>{currentLabel}</SelectValue>
       </SelectTrigger>
       <SelectContent>
         {STATUS_ORDER.map((s) => (

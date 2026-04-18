@@ -3,13 +3,21 @@ import { BookOpen } from "lucide-react";
 
 import type { Author, Book, Review } from "@prisma/client";
 
+import { BookCardActions } from "@/components/book-card-actions";
 import { RatingStars } from "@/components/rating-stars";
 import { StatusBadge } from "@/components/status-badge";
 import { cn } from "@/lib/utils";
 
 type BookCardBook = Book & { authors: Author[]; reviews: Review[] };
+type GoalOption = { year: number };
 
-export function BookCard({ book }: { book: BookCardBook }) {
+export function BookCard({
+  book,
+  goals = [],
+}: {
+  book: BookCardBook;
+  goals?: GoalOption[];
+}) {
   const averageRating =
     book.reviews.length > 0
       ? book.reviews.reduce((acc, r) => acc + r.rating, 0) / book.reviews.length
@@ -19,11 +27,12 @@ export function BookCard({ book }: { book: BookCardBook }) {
     book.pages > 0 ? Math.min(book.pagesRead / book.pages, 1) : 0;
 
   return (
-    <Link
-      href={`/livros/${book.id}`}
-      className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg"
-    >
-      <div className="relative aspect-[2/3] overflow-hidden bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900">
+    <div className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-lg">
+      <Link
+        href={`/livros/${book.id}`}
+        aria-label={`Abrir detalhes de ${book.title}`}
+        className="relative block aspect-[2/3] overflow-hidden bg-gradient-to-br from-slate-200 to-slate-300 dark:from-slate-800 dark:to-slate-900"
+      >
         {book.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -48,15 +57,18 @@ export function BookCard({ book }: { book: BookCardBook }) {
             />
           </div>
         ) : null}
-      </div>
+      </Link>
       <div className="flex flex-1 flex-col gap-1 p-3">
-        <h3 className="line-clamp-2 text-sm font-semibold leading-tight">
+        <Link
+          href={`/livros/${book.id}`}
+          className="line-clamp-2 text-sm font-semibold leading-tight hover:underline"
+        >
           {book.title}
-        </h3>
+        </Link>
         <p className="line-clamp-1 text-xs text-muted-foreground">
           {book.authors.map((a) => a.name).join(", ") || "—"}
         </p>
-        <div className="mt-auto flex items-center justify-between pt-2">
+        <div className="mt-auto flex items-center justify-between gap-2 pt-2">
           <RatingStars value={averageRating} size="sm" readOnly />
           <span
             className={cn(
@@ -67,7 +79,15 @@ export function BookCard({ book }: { book: BookCardBook }) {
             {book.year ?? "0"}
           </span>
         </div>
+        <div className="mt-1 flex items-center justify-end">
+          <BookCardActions
+            bookId={book.id}
+            status={book.status}
+            initialRating={book.initialRating}
+            goals={goals}
+          />
+        </div>
       </div>
-    </Link>
+    </div>
   );
 }

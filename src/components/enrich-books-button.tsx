@@ -16,18 +16,21 @@ export function EnrichBooksButton() {
   function handleClick() {
     startTransition(async () => {
       toast.info(
-        "Buscando capas e páginas nas APIs do Google Books e Open Library...",
+        "Buscando metadados no Google Books e Open Library...",
         { duration: 4000 },
       );
       const res = await enrichBooksAction();
       setLastResult(res);
       if (res.processed === 0) {
-        toast.success("Todos os livros já têm capa e número de páginas.");
+        toast.success("Todos os livros já têm metadados completos.");
         return;
       }
       const parts: string[] = [];
       if (res.updatedCover > 0) parts.push(`${res.updatedCover} capas`);
       if (res.updatedPages > 0) parts.push(`${res.updatedPages} páginas`);
+      if (res.updatedDescription > 0)
+        parts.push(`${res.updatedDescription} sinopses`);
+      if (res.updatedRating > 0) parts.push(`${res.updatedRating} avaliações`);
       if (parts.length === 0) {
         toast.warning(
           `Nenhum metadado encontrado nos ${res.processed} livros processados.`,
@@ -43,11 +46,13 @@ export function EnrichBooksButton() {
     <div className="flex items-center gap-2">
       <Button onClick={handleClick} disabled={pending} variant="outline">
         <Sparkles className="mr-1 h-4 w-4" />
-        {pending ? "Buscando..." : "Preencher capas e páginas"}
+        {pending ? "Buscando..." : "Preencher metadados"}
       </Button>
       {lastResult && !pending && (
         <span className="text-xs text-muted-foreground">
-          {lastResult.updatedCover} capas · {lastResult.updatedPages} páginas
+          {lastResult.updatedCover} capas · {lastResult.updatedPages} páginas ·{" "}
+          {lastResult.updatedDescription} sinopses ·{" "}
+          {lastResult.updatedRating} avaliações
           {lastResult.noMatch > 0 ? ` · ${lastResult.noMatch} sem match` : ""}
         </span>
       )}

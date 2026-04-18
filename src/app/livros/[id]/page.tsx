@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BookOpen, CalendarDays, Edit3, Library, Star } from "lucide-react";
+import {
+  BookOpen,
+  CalendarCheck2,
+  CalendarDays,
+  Edit3,
+  Library,
+  Star,
+} from "lucide-react";
 
 import { BookStatusSelect } from "@/components/book-status-select";
 import { DeleteBookDialog } from "@/components/delete-book-dialog";
@@ -118,6 +125,17 @@ export default async function BookDetailPage({
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
                   <CalendarDays className="h-3 w-3" />
                   {book.year}
+                </span>
+              ) : null}
+              {book.status === BOOK_STATUS.LIDO && book.finishedAt ? (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                  <CalendarCheck2 className="h-3 w-3" />
+                  Concluído em{" "}
+                  {new Date(book.finishedAt).toLocaleDateString("pt-BR", {
+                    day: "2-digit",
+                    month: "long",
+                    year: "numeric",
+                  })}
                 </span>
               ) : null}
             </div>

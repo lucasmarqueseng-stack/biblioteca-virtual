@@ -65,7 +65,7 @@ export default async function BooksPage({
             ? { initialRating: "desc" as const }
             : { updatedAt: "desc" as const };
 
-  const [books, allGenres] = await Promise.all([
+  const [books, allGenres, allGoals] = await Promise.all([
     prisma.book.findMany({
       where,
       include: { authors: true, reviews: true },
@@ -75,6 +75,10 @@ export default async function BooksPage({
       distinct: ["genre"],
       select: { genre: true },
       where: { genre: { not: null } },
+    }),
+    prisma.readingGoal.findMany({
+      select: { year: true },
+      orderBy: { year: "desc" },
     }),
   ]);
 
@@ -137,9 +141,13 @@ export default async function BooksPage({
           <label className="mb-1 block text-xs font-medium text-muted-foreground">
             Status
           </label>
-          <Select name="status" defaultValue={status}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todos" />
+          <Select name="status" defaultValue={status || "all"}>
+            <SelectTrigger className="w-full">
+              <SelectValue>
+                {status && status !== "all"
+                  ? (STATUS_LABELS[status as (typeof STATUS_ORDER)[number]] ?? status)
+                  : "Todos"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
@@ -155,9 +163,11 @@ export default async function BooksPage({
           <label className="mb-1 block text-xs font-medium text-muted-foreground">
             Gênero
           </label>
-          <Select name="genre" defaultValue={genre}>
-            <SelectTrigger>
-              <SelectValue placeholder="Todos" />
+          <Select name="genre" defaultValue={genre || "all"}>
+            <SelectTrigger className="w-full">
+              <SelectValue>
+                {genre && genre !== "all" ? genre : "Todos"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos</SelectItem>
@@ -174,8 +184,11 @@ export default async function BooksPage({
             Ordenar por
           </label>
           <Select name="order" defaultValue={order}>
-            <SelectTrigger>
-              <SelectValue />
+            <SelectTrigger className="w-full">
+              <SelectValue>
+                {BOOK_ORDER_OPTIONS.find((o) => o.value === order)?.label ??
+                  "Adicionado recentemente"}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               {BOOK_ORDER_OPTIONS.map((o) => (
@@ -204,7 +217,7 @@ export default async function BooksPage({
       ) : (
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
           {books.map((book) => (
-            <BookCard key={book.id} book={book} />
+            <BookCard key={book.id} book={book} goals={allGoals} />
           ))}
         </div>
       )}

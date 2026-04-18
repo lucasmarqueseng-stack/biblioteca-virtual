@@ -2,11 +2,16 @@ import {
   MonthlyBooksChart,
   MonthlyPagesChart,
 } from "@/components/charts/goal-charts";
+import { YearHistoryCard } from "@/components/year-history-card";
 import { GoalBookManager } from "@/components/goal-book-manager";
 import { GoalForm } from "@/components/goal-form";
 import { GoalProgressCard } from "@/components/goal-progress-card";
 import { STATUS_LABELS } from "@/lib/constants";
-import { computeGoalProgress, monthlyProgress } from "@/lib/goals";
+import {
+  computeGoalProgress,
+  monthlyProgress,
+  summarizeFinishedByYear,
+} from "@/lib/goals";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -19,13 +24,18 @@ export default async function GoalsPage({
   const params = await searchParams;
   const year = Number(params.ano) || new Date().getFullYear();
 
-  const [goal, allBooks] = await Promise.all([
+  const [goal, allBooks, finishedBooks] = await Promise.all([
     prisma.readingGoal.findUnique({
       where: { year },
       include: { books: true },
     }),
     prisma.book.findMany({ orderBy: { title: "asc" } }),
+    prisma.book.findMany({
+      where: { status: "LIDO" },
+      orderBy: { finishedAt: "desc" },
+    }),
   ]);
+  const yearlySummaries = summarizeFinishedByYear(finishedBooks);
 
   const selectedIds = new Set(goal?.books.map((b) => b.id) ?? []);
   const available = allBooks
@@ -97,6 +107,33 @@ export default async function GoalsPage({
           </p>
         </div>
       )}
+
+      <section>
+        <div className="mb-4">
+          <h2 className="text-2xl font-bold tracking-tight">
+            Histórico por ano
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Total de livros lidos em cada mês e páginas acumuladas por ano.
+            Baseado na data &ldquo;Concluído em&rdquo; de cada livro marcado como
+            lido.
+          </p>
+        </div>
+        {yearlySummaries.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-border p-10 text-center">
+            <p className="text-sm text-muted-foreground">
+              Nenhum livro concluído ainda. Marque livros como &ldquo;Lido&rdquo;
+              para começar a construir seu histórico.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {yearlySummaries.map((s) => (
+              <YearHistoryCard key={s.year} summary={s} />
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
