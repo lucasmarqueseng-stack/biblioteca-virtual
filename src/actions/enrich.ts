@@ -192,6 +192,14 @@ export async function enrichSingleBookAction(
   }
   const author = book.authors[0]?.name ?? "";
   const meta = await fetchBookMetadata(book.title, author);
+  // "Sem match" = API não retornou nenhum metadado (independe de termos
+  // gravado algo — livro com todos os campos já preenchidos pelo usuário
+  // NÃO deve ser sinalizado como sem match se o Google/OL acharam a obra).
+  const apiFoundNothing =
+    !meta.coverUrl &&
+    !meta.pages &&
+    !meta.description &&
+    !meta.initialRating;
   const r = await applyBlankOnlyUpdate(
     bookId,
     meta.coverUrl,
@@ -203,8 +211,6 @@ export async function enrichSingleBookAction(
   const updatedPages = r.wrotePages ? 1 : 0;
   const updatedDescription = r.wroteDescription ? 1 : 0;
   const updatedRating = r.wroteRating ? 1 : 0;
-  const any =
-    updatedCover + updatedPages + updatedDescription + updatedRating;
   revalidatePath("/");
   revalidatePath("/livros");
   revalidatePath(`/livros/${bookId}`);
@@ -215,8 +221,8 @@ export async function enrichSingleBookAction(
     updatedPages,
     updatedDescription,
     updatedRating,
-    noMatch: any === 0 ? 1 : 0,
+    noMatch: apiFoundNothing ? 1 : 0,
     errors: 0,
-    notMatchedTitles: any === 0 ? [book.title] : [],
+    notMatchedTitles: apiFoundNothing ? [book.title] : [],
   };
 }
