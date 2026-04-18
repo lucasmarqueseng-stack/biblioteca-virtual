@@ -10,31 +10,33 @@ export function YearHistoryCard({ summary }: { summary: YearSummary }) {
   );
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+    <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgba(74,40,26,0.04)]">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h3 className="text-xl font-bold tracking-tight">{summary.year}</h3>
-          <p className="text-xs text-muted-foreground">
+          <h3 className="font-heading text-3xl font-semibold tracking-tight">
+            {summary.year}
+          </h3>
+          <p className="text-xs italic text-muted-foreground">
             {summary.totalBooks}{" "}
             {summary.totalBooks === 1 ? "livro lido" : "livros lidos"} no ano
           </p>
         </div>
-        <div className="flex gap-6">
+        <div className="flex gap-8">
           <div className="text-right">
-            <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
+            <div className="flex items-center justify-end gap-1.5 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
               <BookOpen className="h-3.5 w-3.5" />
               Livros no ano
             </div>
-            <div className="text-2xl font-semibold tracking-tight">
+            <div className="font-heading text-2xl font-semibold tracking-tight">
               {summary.totalBooks}
             </div>
           </div>
           <div className="text-right">
-            <div className="flex items-center justify-end gap-1.5 text-xs text-muted-foreground">
+            <div className="flex items-center justify-end gap-1.5 text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
               <Library className="h-3.5 w-3.5" />
               Páginas no ano
             </div>
-            <div className="text-2xl font-semibold tracking-tight">
+            <div className="font-heading text-2xl font-semibold tracking-tight">
               {summary.totalPages.toLocaleString("pt-BR")}
             </div>
           </div>

@@ -19,8 +19,12 @@ export function EmptyState({
       <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
         <BookOpen className="h-7 w-7" />
       </div>
-      <h2 className="text-lg font-semibold">{title}</h2>
-      <p className="mt-1 max-w-md text-sm text-muted-foreground">{description}</p>
+      <h2 className="font-heading text-xl font-semibold tracking-tight">
+        {title}
+      </h2>
+      <p className="mt-1.5 max-w-md text-sm leading-relaxed text-muted-foreground">
+        {description}
+      </p>
       <Link href={actionHref} className={buttonVariants({ className: "mt-5" })}>
         <Plus className="mr-1 h-4 w-4" />
         {actionLabel}

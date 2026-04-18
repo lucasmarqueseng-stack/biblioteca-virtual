@@ -80,7 +80,7 @@ export default async function BookDetailPage({
 
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <div className="flex flex-col items-center gap-4">
-          <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-slate-200 to-slate-300 shadow-lg dark:from-slate-800 dark:to-slate-900">
+          <div className="relative aspect-[2/3] w-full overflow-hidden rounded-2xl border border-border/70 bg-gradient-to-br from-[oklch(0.92_0.03_80)] to-[oklch(0.84_0.05_70)] shadow-[0_10px_30px_-10px_rgba(74,40,26,0.28)]">
             {book.coverUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
@@ -94,8 +94,8 @@ export default async function BookDetailPage({
               </div>
             )}
           </div>
-          <div className="w-full space-y-3 rounded-2xl border border-border bg-card p-4">
-            <div className="text-xs font-medium text-muted-foreground">
+          <div className="w-full space-y-3 rounded-2xl border border-border/70 bg-card p-4 shadow-[0_1px_2px_rgba(74,40,26,0.04)]">
+            <div className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
               Status atual
             </div>
             <BookStatusSelect bookId={book.id} value={book.status} />
@@ -160,23 +160,23 @@ export default async function BookDetailPage({
                 </span>
               ) : null}
             </div>
-            <h1 className="mt-3 text-3xl font-bold tracking-tight sm:text-4xl">
+            <h1 className="font-heading mt-4 text-4xl font-semibold leading-tight tracking-tight sm:text-[2.75rem]">
               {book.title}
             </h1>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-2 text-base italic text-muted-foreground">
               {book.authors.map((a) => a.name).join(", ") || "Autoria desconhecida"}
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-6">
             <div>
-              <div className="text-xs font-medium text-muted-foreground">
+              <div className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
                 Classificação inicial
               </div>
               <RatingStars value={book.initialRating ?? 0} readOnly />
             </div>
             <div>
-              <div className="text-xs font-medium text-muted-foreground">
+              <div className="text-xs font-medium uppercase tracking-[0.08em] text-muted-foreground">
                 Avaliação média
               </div>
               {averageRating != null ? (
@@ -194,16 +194,18 @@ export default async function BookDetailPage({
 
           {book.description ? (
             <div>
-              <h2 className="mb-2 text-lg font-semibold">Sinopse</h2>
-              <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
+              <h2 className="font-heading mb-2 text-xl font-semibold tracking-tight">
+                Sinopse
+              </h2>
+              <p className="whitespace-pre-wrap text-[0.95rem] leading-relaxed text-foreground/85">
                 {book.description}
               </p>
             </div>
           ) : null}
 
           <div>
-            <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
-              <Star className="h-5 w-5 text-amber-400" />
+            <h2 className="font-heading mb-3 flex items-center gap-2 text-xl font-semibold tracking-tight">
+              <Star className="h-5 w-5 text-[oklch(0.72_0.13_70)]" />
               Avaliações
             </h2>
             {book.status === BOOK_STATUS.LIDO ? (

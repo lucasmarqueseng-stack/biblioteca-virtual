@@ -81,11 +81,13 @@ export default async function DashboardPage() {
     <div className="space-y-10">
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-sm font-medium text-primary">Biblioteca Virtual</p>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">
-            Boas-vindas de volta!
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-primary">
+            Biblioteca Virtual
+          </p>
+          <h1 className="font-heading mt-2 text-4xl font-semibold tracking-tight sm:text-5xl">
+            Boas-vindas de volta.
           </h1>
-          <p className="mt-2 max-w-xl text-sm text-muted-foreground">
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
             Acompanhe seu acervo, marque o progresso da leitura, avalie livros
             concluídos e alcance suas metas anuais.
           </p>
@@ -160,19 +162,25 @@ export default async function DashboardPage() {
       ) : null}
 
       <section className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <h2 className="mb-2 text-lg font-semibold">Status da coleção</h2>
+        <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgba(74,40,26,0.04)]">
+          <h2 className="font-heading mb-3 text-xl font-semibold tracking-tight">
+            Status da coleção
+          </h2>
           <StatusPieChart data={statusData} />
         </div>
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <h2 className="mb-2 text-lg font-semibold">Gêneros mais presentes</h2>
+        <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgba(74,40,26,0.04)]">
+          <h2 className="font-heading mb-3 text-xl font-semibold tracking-tight">
+            Gêneros mais presentes
+          </h2>
           <GenreBarChart data={genreData} />
         </div>
       </section>
 
       <section>
         <div className="mb-4 flex items-end justify-between">
-          <h2 className="text-lg font-semibold">Últimos adicionados</h2>
+          <h2 className="font-heading text-xl font-semibold tracking-tight">
+            Últimos adicionados
+          </h2>
           <Link
             href="/livros"
             className="text-sm font-medium text-primary hover:underline"
