@@ -22,9 +22,42 @@ function sleep(ms: number) {
 }
 
 /**
+ * Aplica o update apenas se os campos alvo ainda estão "em branco" no banco
+ * (coverUrl=null / pages=0), usando `updateMany` com a cláusula de guarda.
+ * Isso evita TOCTOU: mesmo que o usuário tenha editado o livro manualmente
+ * entre a leitura inicial e a hora de gravar, nunca sobrescrevemos o valor
+ * que ele acabou de definir.
+ */
+async function applyBlankOnlyUpdate(
+  bookId: number,
+  coverUrl: string | null,
+  pages: number | null,
+): Promise<{ wroteCover: boolean; wrotePages: boolean }> {
+  let wroteCover = false;
+  let wrotePages = false;
+
+  if (coverUrl) {
+    const res = await prisma.book.updateMany({
+      where: { id: bookId, coverUrl: null },
+      data: { coverUrl },
+    });
+    wroteCover = res.count > 0;
+  }
+  if (pages) {
+    const res = await prisma.book.updateMany({
+      where: { id: bookId, pages: 0 },
+      data: { pages },
+    });
+    wrotePages = res.count > 0;
+  }
+  return { wroteCover, wrotePages };
+}
+
+/**
  * Enriquece livros que estão sem capa OU sem páginas, buscando essas informações
  * em APIs públicas (Google Books + Open Library). Não sobrescreve dados já
- * existentes — só preenche os campos em branco.
+ * existentes — só preenche os campos em branco, com garantia contra race
+ * conditions via `updateMany` condicional.
  */
 export async function enrichBooksAction(): Promise<EnrichResult> {
   const targets = await prisma.book.findMany({
@@ -48,25 +81,17 @@ export async function enrichBooksAction(): Promise<EnrichResult> {
         const author = book.authors[0]?.name ?? "";
         try {
           const meta = await fetchBookMetadata(book.title, author);
-          if (meta.coverUrl || meta.pages) {
-            const data: {
-              coverUrl?: string;
-              pages?: number;
-            } = {};
-            if (meta.coverUrl && !book.coverUrl) {
-              data.coverUrl = meta.coverUrl;
-              updatedCover++;
-            }
-            if (meta.pages && book.pages === 0) {
-              data.pages = meta.pages;
-              updatedPages++;
-            }
-            if (Object.keys(data).length > 0) {
-              await prisma.book.update({ where: { id: book.id }, data });
-            }
-          } else {
+          if (!meta.coverUrl && !meta.pages) {
             noMatch++;
+            return;
           }
+          const { wroteCover, wrotePages } = await applyBlankOnlyUpdate(
+            book.id,
+            meta.coverUrl,
+            meta.pages,
+          );
+          if (wroteCover) updatedCover++;
+          if (wrotePages) updatedPages++;
         } catch {
           errors++;
         }
@@ -112,20 +137,13 @@ export async function enrichSingleBookAction(
   }
   const author = book.authors[0]?.name ?? "";
   const meta = await fetchBookMetadata(book.title, author);
-  let updatedCover = 0;
-  let updatedPages = 0;
-  const data: { coverUrl?: string; pages?: number } = {};
-  if (meta.coverUrl && !book.coverUrl) {
-    data.coverUrl = meta.coverUrl;
-    updatedCover++;
-  }
-  if (meta.pages && book.pages === 0) {
-    data.pages = meta.pages;
-    updatedPages++;
-  }
-  if (Object.keys(data).length > 0) {
-    await prisma.book.update({ where: { id: bookId }, data });
-  }
+  const { wroteCover, wrotePages } = await applyBlankOnlyUpdate(
+    bookId,
+    meta.coverUrl,
+    meta.pages,
+  );
+  const updatedCover = wroteCover ? 1 : 0;
+  const updatedPages = wrotePages ? 1 : 0;
   revalidatePath("/");
   revalidatePath("/livros");
   revalidatePath(`/livros/${bookId}`);
