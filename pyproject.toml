@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "biblioteca-virtual"
+version = "0.1.0"
+description = "Sistema de biblioteca virtual em Python com Streamlit"
+readme = "README.md"
+requires-python = ">=3.8"
+authors = [{ name = "Lucas Marques" }]
+dependencies = [
+    "streamlit>=1.32",
+    "sqlalchemy>=2.0",
+    "pandas>=2.0",
+    "plotly>=5.18",
+    "pillow>=10.0",
+    "python-dateutil>=2.8",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
