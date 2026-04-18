@@ -1,140 +1,133 @@
-# 📚 Biblioteca Virtual
+# 📚 Biblioteca Virtual (v2)
 
-Sistema de biblioteca virtual pessoal em **Python + Streamlit** para catalogar
-livros, acompanhar status de leitura, registrar avaliações e acompanhar metas
-anuais com dashboards interativos.
+Sistema web de biblioteca pessoal inspirado em Skoob/Skeelo, construído com Next.js 16, TypeScript, Tailwind CSS, shadcn/ui, Prisma ORM e Recharts.
 
-> Stack: Python 3.8+, Streamlit, SQLAlchemy, SQLite, Pandas, Plotly.
+Permite catalogar livros, acompanhar progresso de leitura, registrar avaliações e gerir metas anuais.
+
+> **Nota sobre versões**
+> A v1 em Python/Streamlit está preservada no branch `devin/1776470693-biblioteca-virtual`. A v2 (este branch) é uma reescrita completa com uma stack web moderna.
 
 ## ✨ Funcionalidades
 
-- **Gerenciamento de livros** (CRUD completo) com título, autores (múltiplos),
-  ano, gênero, descrição, capa (URL ou upload), classificação inicial, total
-  de páginas e páginas lidas.
-- **Status de leitura**: "Não lido", "Lendo", "Lido", "Tenho" (coleção
-  física) — com filtros por status e gênero.
-- **Avaliações** (1 a 5 estrelas + comentário) restritas a livros marcados
-  como *Lido*, com cálculo automático da média.
-- **Metas anuais de leitura** com:
-  - Meta por livros e/ou páginas;
-  - Associação de livros à meta;
-  - Rastreamento de páginas lidas, páginas/dia necessárias, alertas para
-    metas atrasadas;
-  - Gráficos mensais de livros concluídos e páginas acumuladas (Plotly).
-- **Busca** por título ou autor, **ordenação** por ano/classificação e
-  **exportação** da lista em CSV ou JSON.
-- **Dashboard geral** com distribuição de status, livros por gênero e
-  progresso do ano corrente.
+- **CRUD de livros** com título, autores (múltiplos), ano, gênero, descrição, capa (URL), avaliação inicial e total de páginas
+- **Status de leitura**: Não lido, Lendo, Lido, Tenho — filtros e badges coloridos
+- **Progresso por livro**: quantas páginas já lidas + porcentagem
+- **Avaliações com estrelas** (1-5) + comentários, apenas para livros marcados como "Lido"
+- **Metas anuais** por ano: livros e páginas alvo, progresso, páginas/dia necessárias, gráficos mensais
+- **Busca, filtros e ordenação** na biblioteca (por título, autor, status, gênero, avaliação, ano)
+- **Dashboard** com KPIs, gráfico de status (pizza), top gêneros, progresso de meta e últimos livros
+- **Exportação** da biblioteca em CSV ou JSON
+- **Seed de demonstração** com 7 livros + meta anual
 
-## 🗂 Estrutura do projeto
+## 🛠️ Stack
 
-```
-biblioteca-virtual/
-├── app.py                      # Entrada do Streamlit
-├── src/biblioteca/
-│   ├── database.py             # Engine/Session SQLAlchemy
-│   ├── models.py               # ORM (Book, Author, Review, ReadingGoal)
-│   ├── services/               # Regras de negócio (CRUD + metas + seed)
-│   ├── ui/                     # Páginas e componentes Streamlit
-│   └── utils/                  # Validadores e exportação CSV/JSON
-├── tests/                      # Testes pytest com SQLite em memória
-├── data/covers/                # Capas enviadas por upload (ignoradas no git)
-├── requirements.txt            # Dependências de execução
-├── requirements-dev.txt        # Dependências adicionais de desenvolvimento
-└── pyproject.toml              # Configuração de projeto, pytest e ruff
-```
+- **Next.js 16** (App Router, Server Actions, SSR)
+- **TypeScript**
+- **Tailwind CSS 4** + **shadcn/ui** (base-ui/react)
+- **Prisma ORM 6** + **SQLite** (dev) / **PostgreSQL** (produção)
+- **Recharts** para gráficos
+- **Lucide** para ícones
+- **Zod** para validação
+- **sonner** para toasts
 
-## 🚀 Como rodar localmente
+## 🚀 Rodando localmente
 
-### 1. Pré-requisitos
-
-- Python 3.8 ou superior (testado em 3.12).
-- `pip` (ou `uv`/`pipx`, se preferir).
-
-### 2. Instalação
+Pré-requisitos: **Node.js 20+** e **npm**.
 
 ```bash
+# 1. Clonar e entrar na pasta
 git clone https://github.com/lucasmarqueseng-stack/biblioteca-virtual.git
 cd biblioteca-virtual
 
-python3 -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+# 2. Mudar para o branch da v2
+git checkout devin/1776473808-biblioteca-virtual-v2
 
-pip install -r requirements.txt
+# 3. Instalar dependências
+npm install
+
+# 4. Criar o banco SQLite e popular com dados de exemplo
+npx prisma migrate dev --name init
+npx prisma db seed
+
+# 5. Iniciar o servidor de desenvolvimento
+npm run dev
 ```
 
-### 3. Executando a aplicação
+Abra [http://localhost:3000](http://localhost:3000). O banco `prisma/dev.db` é criado automaticamente.
 
-```bash
-streamlit run app.py
-```
+### Scripts úteis
 
-A aplicação abrirá em `http://localhost:8501`. Na primeira execução o banco
-`biblioteca.db` é criado automaticamente e populado com livros, avaliações e
-uma meta de exemplo (via `biblioteca.services.seed`). Para começar com o
-banco vazio, basta apagar o arquivo `biblioteca.db` antes de subir o app.
+| Script | Descrição |
+|--------|-----------|
+| `npm run dev` | Servidor de desenvolvimento com hot-reload (Turbopack) |
+| `npm run build` | Build de produção |
+| `npm start` | Inicia o build de produção |
+| `npm run lint` | Lint com ESLint |
+| `npm run db:migrate` | Aplica/cria migrations (dev) |
+| `npm run db:push` | Push do schema sem gerar migration |
+| `npm run db:studio` | Abre o Prisma Studio no browser |
+| `npm run db:seed` | Popula o banco com dados de exemplo |
 
-### 4. Usando PostgreSQL (opcional)
-
-A URL do banco é lida da variável de ambiente `BIBLIOTECA_DB_URL`. Exemplo:
-
-```bash
-export BIBLIOTECA_DB_URL="postgresql+psycopg2://user:pass@localhost/biblioteca"
-streamlit run app.py
-```
-
-## 🧪 Testes e qualidade
-
-Os testes usam um SQLite em memória por teste e cobrem o CRUD de livros,
-avaliações e o cálculo de progresso das metas.
-
-```bash
-pip install -r requirements-dev.txt
-pytest -q              # testes
-ruff check .           # lint (estilo e bugs básicos)
-```
-
-## 🖥 Páginas do app
-
-| Página | O que faz |
-| --- | --- |
-| **Dashboard** | Métricas gerais, pizza de status, barras por gênero, progresso do ano corrente. |
-| **Biblioteca** | Lista os livros com filtros, busca, ordenação, exportação CSV/JSON e acesso ao detalhe. |
-| **Adicionar livro** | Formulário com validação de campos e upload opcional da capa. |
-| **Detalhes do livro** | Edição completa, mudança de status, registro de páginas lidas, avaliações e exclusão segura com confirmação pelo título. |
-| **Metas de leitura** | Define meta (livros e/ou páginas), associa/desassocia livros, exibe progresso, dias restantes, páginas/dia necessárias e gráficos mensais. |
-
-## ☁️ Deploy
-
-### Streamlit Community Cloud
-
-1. Faça push deste repositório no GitHub.
-2. Acesse [streamlit.io/cloud](https://streamlit.io/cloud) e aponte para
-   `app.py`.
-3. Se quiser persistência em produção, configure `BIBLIOTECA_DB_URL`
-   apontando para um PostgreSQL hospedado (Supabase, Neon, etc.).
-
-### Heroku / Railway / Render
-
-Adicione um `Procfile` com:
+## 🧭 Estrutura do projeto
 
 ```
-web: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
+biblioteca-virtual/
+├── prisma/
+│   ├── schema.prisma       # Modelos (Book, Author, Review, ReadingGoal)
+│   └── seed.ts             # Dados iniciais
+├── src/
+│   ├── app/                # Rotas (App Router)
+│   │   ├── page.tsx        # Dashboard
+│   │   ├── livros/         # Biblioteca, detalhes, novo, editar
+│   │   ├── metas/          # Metas anuais
+│   │   ├── api/export/     # Exportação CSV/JSON
+│   │   └── layout.tsx      # Layout raiz com Navbar
+│   ├── actions/            # Server actions (books, reviews, goals)
+│   ├── components/         # Componentes (UI + domínio)
+│   │   ├── ui/             # shadcn/ui primitives
+│   │   └── charts/         # Gráficos Recharts
+│   └── lib/                # constants, validations, prisma, goals, export
+└── public/
 ```
 
-e configure a variável `BIBLIOTECA_DB_URL` conforme o provedor.
+## ☁️ Deploy no Vercel + Neon (grátis)
 
-## 🔒 Segurança e validações
+1. **Criar banco Postgres no [Neon](https://neon.tech)** (grátis) e copiar a `DATABASE_URL`.
+2. No [Vercel](https://vercel.com/new), importar este repositório e configurar:
+   - Framework: **Next.js** (autodetectado)
+   - Environment Variable: `DATABASE_URL` com o valor do Neon
+3. No arquivo `prisma/schema.prisma`, trocar o provider para Postgres antes do deploy:
+   ```prisma
+   datasource db {
+     provider = "postgresql"
+     url      = env("DATABASE_URL")
+   }
+   ```
+4. Rodar as migrations contra o Neon antes do primeiro deploy:
+   ```bash
+   DATABASE_URL="postgresql://..." npx prisma migrate deploy
+   DATABASE_URL="postgresql://..." npx prisma db seed   # opcional
+   ```
+5. Push no branch — o Vercel faz deploy automático e gera uma URL de preview.
 
-- Inputs obrigatórios (título, autores) são validados tanto na UI quanto na
-  camada de serviços — não é possível salvar sem eles.
-- Avaliações só são permitidas para livros com status **Lido**.
-- Exclusão de livros exige digitar o título exato como confirmação.
-- Todas as interações com o banco passam por SQLAlchemy ORM, evitando SQL
-  injection.
-- Uploads de capa são salvos em `data/covers/` com nome saneado.
+O script de build já roda `prisma generate` antes do `next build`, então a Vercel vai funcionar sem configuração extra.
+
+## 📝 Modelo de dados (resumo)
+
+- **Author**: `id`, `name` (unique)
+- **Book**: `id`, `title`, `year`, `genre`, `description`, `coverUrl`, `status`, `initialRating`, `pages`, `pagesRead`, `authors`, `reviews`, `goals`
+- **Review**: `id`, `bookId`, `rating` (1-5), `comment`, `createdAt`
+- **ReadingGoal**: `id`, `year` (unique), `targetBooks`, `targetPages`, `books`
+
+## 🗺️ Roadmap
+
+- [ ] Autenticação multiusuário (Clerk / Auth.js)
+- [ ] Upload de capas para CDN (Cloudinary/Supabase Storage)
+- [ ] Listas personalizadas / prateleiras
+- [ ] App mobile com Expo compartilhando API
+- [ ] Importação do Goodreads
+- [ ] Recomendações
 
 ## 📄 Licença
 
-Livre para uso pessoal e educacional. Ajuste para a licença de sua
-preferência antes de publicar.
+MIT.
