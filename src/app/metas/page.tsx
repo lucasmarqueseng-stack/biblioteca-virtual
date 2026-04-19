@@ -3,10 +3,11 @@ import {
   MonthlyPagesChart,
 } from "@/components/charts/goal-charts";
 import { YearHistoryCard } from "@/components/year-history-card";
-import { GoalBookManager } from "@/components/goal-book-manager";
+import { GoalBookAdder } from "@/components/goal-book-manager";
+import { GoalBookGrid } from "@/components/goal-book-grid";
 import { GoalForm } from "@/components/goal-form";
 import { GoalProgressCard } from "@/components/goal-progress-card";
-import { STATUS_LABELS } from "@/lib/constants";
+import { BOOK_STATUS, STATUS_LABELS, type BookStatus } from "@/lib/constants";
 import {
   computeGoalProgress,
   monthlyProgress,
@@ -15,6 +16,16 @@ import {
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Ordem de exibição pedida: primeiro os que estou lendo, depois os que preciso
+ * ler (não lidos) e, por fim, os que já finalizei.
+ */
+const GOAL_STATUS_ORDER: Record<BookStatus, number> = {
+  [BOOK_STATUS.LENDO]: 0,
+  [BOOK_STATUS.NAO_LIDO]: 1,
+  [BOOK_STATUS.LIDO]: 2,
+};
 
 export default async function GoalsPage({
   searchParams,
@@ -27,7 +38,11 @@ export default async function GoalsPage({
   const [goal, allBooks, finishedBooks] = await Promise.all([
     prisma.readingGoal.findUnique({
       where: { year },
-      include: { books: true },
+      include: {
+        books: {
+          include: { authors: true, reviews: true },
+        },
+      },
     }),
     prisma.book.findMany({ orderBy: { title: "asc" } }),
     prisma.book.findMany({
@@ -41,11 +56,12 @@ export default async function GoalsPage({
   const available = allBooks
     .filter((b) => !selectedIds.has(b.id))
     .map((b) => ({ id: b.id, title: b.title, status: b.status }));
-  const selected = (goal?.books ?? []).map((b) => ({
-    id: b.id,
-    title: b.title,
-    status: b.status,
-  }));
+  const selectedBooks = [...(goal?.books ?? [])].sort((a, b) => {
+    const oa = GOAL_STATUS_ORDER[a.status as BookStatus] ?? 99;
+    const ob = GOAL_STATUS_ORDER[b.status as BookStatus] ?? 99;
+    if (oa !== ob) return oa - ob;
+    return a.title.localeCompare(b.title, "pt-BR");
+  });
 
   const progress = goal ? computeGoalProgress(goal) : null;
   const monthly = goal ? monthlyProgress(goal) : [];
@@ -94,18 +110,25 @@ export default async function GoalsPage({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgba(74,40,26,0.04)]">
-            <h2 className="font-heading mb-4 text-xl font-semibold tracking-tight">
-              Livros associados à meta ({selected.length})
-            </h2>
-            <GoalBookManager
-              year={year}
-              selected={selected}
-              available={available.map((b) => ({
-                ...b,
-                title: `${b.title} — ${STATUS_LABELS[b.status as keyof typeof STATUS_LABELS] ?? b.status}`,
-              }))}
-            />
+          <div className="space-y-6 rounded-2xl border border-border/70 bg-card p-6 shadow-[0_1px_2px_rgba(74,40,26,0.04)]">
+            <div className="flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <h2 className="font-heading text-xl font-semibold tracking-tight">
+                  Livros associados à meta ({selectedBooks.length})
+                </h2>
+                <p className="mt-1 text-xs italic text-muted-foreground">
+                  Ordenados por: lendo → a ler → lidos.
+                </p>
+              </div>
+              <GoalBookAdder
+                year={year}
+                available={available.map((b) => ({
+                  ...b,
+                  title: `${b.title} — ${STATUS_LABELS[b.status as keyof typeof STATUS_LABELS] ?? b.status}`,
+                }))}
+              />
+            </div>
+            <GoalBookGrid year={year} books={selectedBooks} />
           </div>
         </>
       ) : (
