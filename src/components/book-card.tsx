@@ -1,12 +1,11 @@
 import Link from "next/link";
-import { BookmarkCheck, BookOpen } from "lucide-react";
+import { BookmarkCheck, BookOpen, Check } from "lucide-react";
 
 import type { Author, Book, Review } from "@prisma/client";
 
 import { BookCardActions } from "@/components/book-card-actions";
 import { RatingStars } from "@/components/rating-stars";
-import { StatusBadge } from "@/components/status-badge";
-import { OWNED_BADGE_CLASS, OWNED_LABEL } from "@/lib/constants";
+import { BOOK_STATUS, OWNED_LABEL, STATUS_LABELS } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 type BookCardBook = Book & { authors: Author[]; reviews: Review[] };
@@ -47,18 +46,32 @@ export function BookCard({
             <BookOpen className="h-12 w-12 text-muted-foreground/50" />
           </div>
         )}
-        <div className="absolute left-2 top-2 flex flex-col items-start gap-1">
-          <StatusBadge status={book.status} />
+        {book.status === BOOK_STATUS.LENDO ? (
+          <span
+            className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-[oklch(0.95_0.04_75)]/95 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-[oklch(0.42_0.09_50)] shadow-[0_1px_2px_rgba(74,40,26,0.12)] ring-1 ring-[oklch(0.82_0.07_65)]/60"
+            title={STATUS_LABELS.LENDO}
+          >
+            <BookOpen className="h-3 w-3" />
+            {STATUS_LABELS.LENDO}
+          </span>
+        ) : null}
+        <div className="absolute right-2 top-2 flex flex-col items-end gap-1.5">
+          {book.status === BOOK_STATUS.LIDO ? (
+            <span
+              title={STATUS_LABELS.LIDO}
+              aria-label={STATUS_LABELS.LIDO}
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-[oklch(0.5_0.13_145)] text-white shadow-[0_1px_3px_rgba(0,0,0,0.25)] ring-2 ring-background/85"
+            >
+              <Check className="h-4 w-4" strokeWidth={3} />
+            </span>
+          ) : null}
           {book.owned ? (
             <span
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
-                OWNED_BADGE_CLASS,
-              )}
               title={OWNED_LABEL}
+              aria-label={OWNED_LABEL}
+              className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_1px_3px_rgba(0,0,0,0.25)] ring-2 ring-background/85"
             >
-              <BookmarkCheck className="h-3 w-3" />
-              {OWNED_LABEL}
+              <BookmarkCheck className="h-4 w-4" />
             </span>
           ) : null}
         </div>
