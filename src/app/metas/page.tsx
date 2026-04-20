@@ -47,6 +47,7 @@ export default async function GoalsPage({
     prisma.book.findMany({ orderBy: { title: "asc" } }),
     prisma.book.findMany({
       where: { status: "LIDO" },
+      include: { authors: true, reviews: true },
       orderBy: { finishedAt: "desc" },
     }),
   ]);
