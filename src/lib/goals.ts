@@ -1,8 +1,11 @@
-import type { Book, ReadingGoal } from "@prisma/client";
+import type { Author, Book, ReadingGoal, Review } from "@prisma/client";
 
 import { BOOK_STATUS } from "@/lib/constants";
 
 export type GoalWithBooks = ReadingGoal & { books: Book[] };
+
+/** Book enriquecido com autores e reviews (usado em históricos). */
+export type BookWithAuthors = Book & { authors: Author[]; reviews: Review[] };
 
 export type GoalProgress = {
   goal: GoalWithBooks;
@@ -127,16 +130,43 @@ export function monthlyProgress(goal: GoalWithBooks) {
   });
 }
 
+export type MonthSummary = {
+  mes: number;
+  label: string;
+  livros: number;
+  paginas: number;
+  /**
+   * Livros concluídos naquele mês, em ordem decrescente de data de término
+   * (mais recente primeiro). Inclui `authors` e `reviews` para poder
+   * renderizar o BookCard.
+   */
+  books: BookWithAuthors[];
+};
+
 export type YearSummary = {
   year: number;
   totalBooks: number;
   totalPages: number;
-  months: { mes: number; label: string; livros: number; paginas: number }[];
+  months: MonthSummary[];
 };
 
-/** Agrega TODOS os livros lidos (não só os de metas) por ano+mês. */
+function emptyMonths(): MonthSummary[] {
+  return Array.from({ length: 12 }, (_, i) => ({
+    mes: i + 1,
+    label: MONTH_LABELS[i],
+    livros: 0,
+    paginas: 0,
+    books: [],
+  }));
+}
+
+/**
+ * Agrega TODOS os livros lidos (não só os de metas) por ano+mês, guardando
+ * também a lista real de livros de cada mês para permitir drill-down no
+ * histórico ("quais livros eu li em março de 2025?").
+ */
 export function summarizeFinishedByYear(
-  books: Book[],
+  books: BookWithAuthors[],
 ): YearSummary[] {
   const byYear = new Map<number, YearSummary>();
 
@@ -150,12 +180,7 @@ export function summarizeFinishedByYear(
         year,
         totalBooks: 0,
         totalPages: 0,
-        months: Array.from({ length: 12 }, (_, i) => ({
-          mes: i + 1,
-          label: MONTH_LABELS[i],
-          livros: 0,
-          paginas: 0,
-        })),
+        months: emptyMonths(),
       };
       byYear.set(year, summary);
     }
@@ -165,6 +190,18 @@ export function summarizeFinishedByYear(
     const idx = dt.getMonth();
     summary.months[idx].livros += 1;
     summary.months[idx].paginas += pages;
+    summary.months[idx].books.push(book);
+  }
+
+  // Ordena os livros dentro de cada mês por data de término, mais recente primeiro.
+  for (const summary of byYear.values()) {
+    for (const month of summary.months) {
+      month.books.sort((a, b) => {
+        const da = bookFinishedDate(a)?.getTime() ?? 0;
+        const db = bookFinishedDate(b)?.getTime() ?? 0;
+        return db - da;
+      });
+    }
   }
 
   return Array.from(byYear.values()).sort((a, b) => b.year - a.year);
